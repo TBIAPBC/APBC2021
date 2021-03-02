@@ -65,7 +65,7 @@ to clone using ssh or (if the former should not work)
   git checkout $githubname
 ```
 
-* NOTE: You should __never__ write anything into the master branch of our repository. Always use your own branch. Ideally, create a new branch for every assignment, e.g. $githubname-A0 / $githubname-A1 etc.
+* __NOTE: You should NEVER write anything into the master branch of our repository!__ Always use your *own branch*. To this end, create a new branch for every assignment, e.g. $githubname-A0 / $githubname-A1 etc.
 
 * Write the "Hello world" program according to the above specification. The programming language is your choice (as for all coming assignments).
 
@@ -82,13 +82,11 @@ to clone using ssh or (if the former should not work)
 ```
   git push --set-upstream origin $githubname:$githubname
 ```
-  The --set-upstream causes git to remember the upstream branch; it
-  can be ommitted in follow-up pushs from your branch.
+  The --set-upstream causes git to remember the upstream branch; it can be ommitted in follow-up pushs from your branch.
 
-* Go to https://github.com/TBIAPBC/APBC2021; make a pull request (PR) from your branch into the master branch.
+* Go to https://github.com/TBIAPBC/APBC2021; make a pull request (PR) from your branch into the master branch. 
 
-* If you get stuck let us know via the comment functionality in the PR
-  on github. Include all necessary information, what went wrong and
+* If you get stuck let us know via the comment functionality in the PR on github. Include all necessary information, what went wrong and
   how we can help e.g.:
 
 ```
@@ -96,10 +94,8 @@ to clone using ssh or (if the former should not work)
   My program is not executed with error XYZ
 ```
 
-* After successful testing (optional) and if you like your program, write another
-  comment (alternatively, file a review request) to let us know we
-  should review the submission. If everything is ok, we will merge
-  your submission into the branch 'master' (or tell you what to
+* After successful testing (optional) and if you like your program, write another comment (alternatively, file a review request) to let us know we
+  should review the submission. If everything is ok, we will merge your submission into the branch 'master' (or tell you what to
   improve).
 
 ```
