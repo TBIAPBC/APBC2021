@@ -43,7 +43,7 @@ Potentially useful links
 ------------------------
 
 * [CodeCademy](https://www.codecademy.com) provides interactive tutorials of programming languages (or git).
-* [Git](git-scm.com): main page for the git version control system
+* [Git](https://git-scm.com): main page for the git version control system
 * [Git Introduction](https://imada.sdu.dk/~jlandersen/_static/git.pdf): an intro to distributed version control, using Git.
 * [Git school](https://github.com/git-school): git course material
 * ... including a cool [Git visualization](http://git-school.github.io/visualizing-git/).
