@@ -33,7 +33,7 @@ Here are the single assignments together with our meeting schedule. Generally, s
 
 * May-26-2021 --- Team Project II (coordination meeting)
 
-* ~~Jun-9-2019 --- Extra project meeting~~
+* (Jun-9-2021 --- Extra project meeting ?)
 
 * Jun-23-2021 --- Final project meeting
 
@@ -44,7 +44,7 @@ Potentially useful links
 
 * [CodeCademy](https://www.codecademy.com) provides interactive tutorials of programming languages (or git).
 * [Git](git-scm.com): main page for the git version control system
-* [Git Introduction](https://www.tbi.univie.ac.at/~jlandersen/_static/git.pdf): an intro to distributed version control, using Git.
+* [Git Introduction](https://imada.sdu.dk/~jlandersen/_static/git.pdf): an intro to distributed version control, using Git.
 * [Git school](https://github.com/git-school): git course material
 * ... including a cool [Git visualization](http://git-school.github.io/visualizing-git/).
 * ... and here is a [video](https://vimeo.com/314971616/ed90cde6ec) demonstrating git features (using this visualization tool)
