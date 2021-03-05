@@ -78,7 +78,7 @@ to clone using ssh or (if the former should not work)
   git commit
 ```
 
-* Push your branch to the same branch in the repository on Github
+* Push your branch to the same branch in the repository on Github 
 ```
   git push --set-upstream origin $githubname:$githubname
 ```

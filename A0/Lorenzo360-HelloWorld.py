@@ -1,4 +1,4 @@
-#Proramm prints Hello World and the content of HelloWorld-test1.in
+# Script prints Hello World and the content of HelloWorld-test1.in
 print("Hello World!")
 try:
     file = open("HelloWorld-test1.in", "r")
