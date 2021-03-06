@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import re
+import sys
 from functools import cmp_to_key
 
 def add_args(parser):
@@ -60,10 +61,11 @@ def TextFileToDictionary(filename,caseinsensitive=False):
         return totalWordCount,uniqueWordCount,dictionary
     except Exception as e:
         print(e)
-
+        sys.exit(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prints the word counts for each word in the given text file ")
     add_args(parser)
     main(parser.parse_args())
+    sys.exit(0)
 
