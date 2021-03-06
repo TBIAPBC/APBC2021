@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Script prints Hello World! and the content of a text file provided by command line
 import sys
 
