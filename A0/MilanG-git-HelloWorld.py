@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import sys
 
@@ -10,6 +9,4 @@ with open(file, "r") as fh_file:
 
 output = "Hello World!\n" + content
 
-outfile = "MilanG-git-HelloWorld.out"
-with open(outfile, "w") as fh_out:
-    fh_out.write(output)
+print(output)
