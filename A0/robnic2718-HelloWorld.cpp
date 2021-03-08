@@ -1,5 +1,5 @@
 /*
-Please either compile the source yourself with a C++ compiler
+Please either compile the src code yourself with a C++ compiler
 or
 use my exe-file "robnic2718-HelloWorld" and try this on the command line:
 > ./robnic2718-HelloWorld HelloWorld-test1.in
