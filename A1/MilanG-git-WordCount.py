@@ -2,7 +2,7 @@
 import sys
 import argparse
 import re
-from functools import cmp_to_key
+
 
 #define commandline arguments
 def add_args(parser):
@@ -38,25 +38,16 @@ def text_to_dict(args):
     
     return wdict, uniquecount, totalcount
 
-#Compare two entries of the dictionary, first by word count then alphabetically
-def compare(item1, item2):
-    if item1[1] == item2[1]:
-        if item1[0] < item2[0]:
-            return -1
-        else:
-            return 1
-    else:
-        return item2[1]-item1[1]
-
 
 def main(args):
     wdict, unique, total = text_to_dict(args)
     
     if args.l:
-        wdict ={key: value for key, value in sorted(wdict.items(), key = cmp_to_key(compare))}
-        for key, value in wdict.items():
-            p = str(key) + "\t" + str(value)
+        elem = [v[0] for v in sorted(wdict.items(), key =lambda kv: (-kv[1], kv[0]))]
+        for i in elem:
+            p = str(i) + "\t" + str(wdict[i])
             print(p)
+
     else:
         print(unique, "/", total)
 
