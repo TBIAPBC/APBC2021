@@ -1,9 +1,4 @@
-/*
-Please either compile the src code yourself with a C++ compiler
-or
-use my exe-file "robnic2718-HelloWorld" and try this on the command line:
-> ./robnic2718-HelloWorld HelloWorld-test1.in
-*/
+// please compile the src code using a C++ compiler to run it
 
 #include<iostream>
 #include<fstream>
