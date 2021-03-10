@@ -46,7 +46,7 @@ Write a program to solve this problem, place it into A2 and name it
 
 Push your solution to your participants branch. You could just continue
 using the same branch on github as before. But, to keep things cleanly separated, we request to push to a new branch
-named $githubname-A2 (like mtw-A2 in my case)
+named $githubname-A2 (e.g. mtw-A2).
 
 Your solution must be general such that it works for arbitrary (even)
 numbers of cities and cost limits. Therefore read in the matrix from a
