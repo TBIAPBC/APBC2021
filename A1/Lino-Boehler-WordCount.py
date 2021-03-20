@@ -42,6 +42,8 @@ def count_words(data,Ignore,show_list):
 
         for word in split_list:
             if len(word) > 0:
+              #the ignore case is currently in the for loop - I would be better to put it out - this way the if check is computetd allways -> a bit slower
+              #total_count can be ommited by len(split_list)
                 if Ignore == True:
                     word=word.lower()
                 total_count+=1
