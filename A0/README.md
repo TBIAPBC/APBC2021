@@ -1,5 +1,13 @@
 # A0 - Warm up assignment: Hello World
 
+## Result
+
+Bash program which prints "Hello world!" at the top of an input file. Use it with flag ```-i```.
+
+```
+bash helloworld.sh -i HelloWorld-test1.in
+```
+
 Dear APBC people,
 
 in this assignment, you should write---for warm up---a program that
