@@ -20,7 +20,7 @@ parser.add_argument("-I","--Ignore_case",help="Ignore case sensitivity",action="
 args = parser.parse_args()
 
 ## Assigning new names to input variables
-input_file=args.file
+input_file=args.file ##I guess python Lino-Boehler-WordCount.py wourd.txt.input is not working now? I am just guessing this workds just with file flag?
 Ignore=args.Ignore_case
 show_list=args.countlist
 
