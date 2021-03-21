@@ -14,7 +14,8 @@ class CapitalOptimizer:
         self.read_input(file)
         self.costDict = {key: value for key, value in
                          sorted(self.costDict.items(), key=cmp_to_key(self.compare_dict_by_value))}
-        self.lowest_cost=list(self.costDict.values())[-1]
+        # set lowest cost to impossible high cost, will be updated in branch and bound step
+        self.lowest_cost=list(self.costDict.values())[-1]* self.numberOfCapitals
 
     #Print some diagnostics
     def print(self):
@@ -31,6 +32,7 @@ class CapitalOptimizer:
         print("Performance gain over brute force: " +str(self.possible_capital_pairings()*(self.numberOfCapitals/2)/self.numberOfRecursions))
         print("Maximum recursion depth: " + str(self.maxRecursionDepth))
         print("Number of solutions: "+str(len(self.solutions)))
+        print("Lowest cost: " + str(self.lowest_cost))
         print("Solutions")
         self.print_solutions_and_price()
 
@@ -139,17 +141,17 @@ class CapitalOptimizer:
             self.maxRecursionDepth=currentIndex
 
         if currentIndex==0: # Initialisation step
-            test=[i for i in range(0, len(self.costDict))]
             v = [False for i in range(0, len(self.costDict))]
 
         else:
             # Abort if price greater than cost limit or price is greater than lowest cost (only used if onlyOptimalResult is true)
-            if self.price(v) > self.costLimit and (not self.onlyOptimalResult or self.price(v)>self.lowest_cost):
+            if self.price(v) > self.costLimit or (self.onlyOptimalResult and self.price(v)>self.lowest_cost):
                 return
 
-            if self.are_all_capitals_covered(v):  # Bounding step
-                if self.onlyOptimalResult and self.lowest_cost>self.price(v):
+            if self.are_all_capitals_covered(v):
+                if self.onlyOptimalResult and self.price(v)<self.lowest_cost:
                     self.solutions=[self.select_keys_from_dict(v)]
+                    self.lowest_cost=self.price(v)
                 else:
                     self.solutions.append(self.select_keys_from_dict(v))
                 return
@@ -157,12 +159,12 @@ class CapitalOptimizer:
             if currentIndex+1 >= len(self.costDict): # Avoid index of bounds
                 return
 
-        if self.lower_bound(v, currentIndex)<=self.costLimit: # Branching step
-            self.branch_and_bound(v.copy(), currentIndex+1)
+        if self.lower_bound(v, currentIndex)<=self.costLimit: # bounding step
+            self.branch_and_bound(v.copy(), currentIndex+1) #branch 1
             v2 = v.copy()
             v2[currentIndex] = True
             if self.is_solution_disjunct(v2): # Make sure that no capital is covered twice
-                self.branch_and_bound(v2, currentIndex+1)
+                self.branch_and_bound(v2, currentIndex+1) #branch 2
         else:
             return
 
@@ -179,7 +181,10 @@ def main(args):
     if args.verbose:
         capitalOptimizer.print()
     else:
-        capitalOptimizer.print_solutions()
+        if args.o:
+            print(capitalOptimizer.lowest_cost)
+        else:
+            capitalOptimizer.print_solutions()
 
 
 if __name__ == "__main__":
