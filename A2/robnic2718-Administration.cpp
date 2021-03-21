@@ -45,7 +45,7 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
     // For-loop pairs one node in the children_nodes_list with the root node at each iteration
       // Then we evaluate the cost of the pair and if the cost of this pair is (still) below the limit.
         // We make a recursive call of the branch and bound function, where
-          // we pass the current_cost the and the current_path in the tree.
+          // we pass the current_cost and the current_path in the tree.
             // This way we will make recursive calls as long as the costLimit is satisfied and as long as
               // there are nodes in the children_nodes list who still have to be explored.
     for(size_t pos{0}; pos < children.size(); pos++)
@@ -131,7 +131,7 @@ string concat_chars(size_t pos1, size_t pos2, const string &str)
 
 // This function reads in the data from the file using so-called streams.
   // Streams always read in the next word in a line string.
-    // By iterating this process until the end of string has been reached, I can read in each word/number.
+    // By iterating this process until the end of string has been reached, I can read in desired words/numbers.
       // I did not use a fancy built-in function, but implemented it on my own.
 void read_file(int argc, char **args, bool &optimize, int &numCapitals,
                int &costLimit, map<string, int> &costMatrix, string &capitals)
