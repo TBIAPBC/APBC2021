@@ -16,14 +16,20 @@ void read_file(int, char**, bool&, int&, int&, map<string, int>&, string&);
 // START Branch and Bound algorithm
 vector<string> branchNbound(string input_set, const map<string, int> &costMatrix, int costLimit_parameter,
                             bool optimize = false, int current_cost = 0, string current_path = "") 
-{
+{ 
+  /*
+    Please note that the costMatrix is passed as a reference, so it is not being copied in each recurive call, but just the memory
+    address is passed so that the current scope of a certain recursive call has access to the costMatrix.
+  */
+  
   // If input data is empty, return empty set
+  // Keep track of recursion count
   static size_t recursion_count{0};
   if(recursion_count == 0 && input_set.empty())
     return vector<string>{};
   recursion_count++;
   
-  // Initialize static variables ("one-lifetime variables")
+  // Initialize static variables ("one-lifetime variables", i.e. variables are only initialized once)
   static int costLimit{costLimit_parameter};
   static vector<string> solutions;
   
@@ -31,10 +37,17 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
   // --> branch until either the costLimit is not satisfied anymore or a child-node has been reached
   if(!input_set.empty())
   {
-    int pair_cost;
-    char root{input_set.at(0)};
-    string children{input_set.erase(0, 1)}, children_copy;
-
+    // Variable declarations/initializations
+    int pair_cost; 
+    char root{input_set.at(0)}; # root is the first instance (capital) in the set of instances
+    string children{input_set.erase(0, 1)}, children_copy; # children are all instances, except the root
+    
+    // For-loop pairs one node in the children_nodes_list with the root node at each iteration
+      // Then we evaluate the cost of the pair and if the cost of this pair is (still) below the limit.
+        // We make a recursive call of the branch and bound function, where
+          // we pass the current_cost the and the current_path in the tree.
+            // This way we will make recursive calls as long as the costLimit is satisfied and as long as
+              // there are nodes in the children_nodes list who still have to be explored.
     for(size_t pos{0}; pos < children.size(); pos++)
     {
       string pair{string{root} + string{children.at(pos)}};
@@ -51,6 +64,9 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
         branchNbound(children_copy, costMatrix, costLimit, optimize, current_cost_update, current_path + pair);
     }
   }
+  // This part of the code adds solutions to the list or in case that we reached a final solution and the
+    // final solution does not satisfy the costLimit then this code makes sure to just return to the scope
+      // of the previous recursive call, to continue the for-loop.
   else
   { 
     // If all feasible results should be yielded, add feasible solution to solution list
@@ -77,6 +93,8 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
 }
 // END
 
+// For those of you who not acquainted with C++, main is the function that automatically gets
+  // called when you start a C++ program, i.e. it is the start of the program.
 int main(int argc, char **args)
 {
 
@@ -93,6 +111,7 @@ int main(int argc, char **args)
   // Call branch N bound function
   solutions = branchNbound(capitals, costMatrix, costLimit, optimize);
   
+  // Print solutions, the branch and bound is implemented such that the lexicographical order is maintained
   for(auto& solution : solutions) 
   {
     for(int pos{0}; pos < numCapitals; pos += 2)
@@ -110,6 +129,10 @@ string concat_chars(size_t pos1, size_t pos2, const string &str)
   return a + b;
 } 
 
+// This function reads in the data from the file using so-called streams.
+  // Streams always read in the next word in a line string.
+    // By iterating this process until the end of string has been reached, I can read in each word/number.
+      // I did not use a fancy built-in function, but implemented it on my own.
 void read_file(int argc, char **args, bool &optimize, int &numCapitals,
                int &costLimit, map<string, int> &costMatrix, string &capitals)
 {
