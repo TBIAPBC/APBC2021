@@ -11,7 +11,7 @@ def cost(pair, capitals, matrix):
     cost = matrix[i1, i2]
     return int(cost)
 
-def branch_bound(combis, nocap, maxcost, capitals, matrix, args):
+def branch_bound(combis, nocap, maxcost, cost_dict, args):
     
     if args.o:
         best = math.inf
@@ -22,11 +22,10 @@ def branch_bound(combis, nocap, maxcost, capitals, matrix, args):
     
     tree = {}
     for i in combis:
-        cost_cap = cost(i, capitals, matrix)
-        if cost_cap < maxcost:
+        if cost_dict[i] < maxcost:
             #initialise the search tree with single combinations
             if i not in tree:
-                tree[i] = cost_cap
+                tree[i] = cost_dict[i]
             
             #create separate dict to add new nodes, will be combined later with the dict tree
             new_node_dict = {}
@@ -47,7 +46,7 @@ def branch_bound(combis, nocap, maxcost, capitals, matrix, args):
                     new_ad = sorted(new)
                     
                     #calculate the new cost
-                    new_cost = tree[admin] + cost_cap
+                    new_cost = tree[admin] + cost_dict[i]
                     
                     new_node = str(new_ad[0])
                     for k in new_ad[1:]:
@@ -57,7 +56,10 @@ def branch_bound(combis, nocap, maxcost, capitals, matrix, args):
                     if args.o:
                         if len(new_ad) == nocap/2 and new_cost < best:
                             best = new_cost
-                            solution = new_node
+                            solution = []
+                            solution.append(new_node)
+                        elif len(new_ad) == nocap/2 and new_cost == best:
+                            solution.append(new_node)
                     
                     #otherwise save all eligible solutions
                     elif len(new_ad) == nocap/2 and new_node not in solutions and new_cost <= maxcost:
@@ -74,7 +76,7 @@ def branch_bound(combis, nocap, maxcost, capitals, matrix, args):
                     tree[l] = new_node_dict[l]
     
     if args.o:
-        return solution
+        return sorted(solution)
     else:
         return sorted(solutions)
 
@@ -103,12 +105,15 @@ def main(args):
     cap_string = ("").join(capitals)
     combis = [c[0]+c[1] for c in itertools.combinations(cap_string, 2)]
     
+    cost_dict = {}
+    for i in combis:
+        combi_cost = cost(i, capitals, matrix)
+        if i not in cost_dict:
+            cost_dict[i] = int(combi_cost)
     
-    solution = branch_bound(combis, int(nocap), int(maxcost), capitals, matrix, args)
-    if args.o:
-        print(solution)
-    else:
-        for s in solution:
+    
+    solution = branch_bound(combis, int(nocap), int(maxcost), cost_dict, args)
+    for s in solution:
             print(s)
 
 
