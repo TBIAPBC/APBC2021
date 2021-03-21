@@ -39,8 +39,8 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
   {
     // Variable declarations/initializations
     int pair_cost; 
-    char root{input_set.at(0)}; # root is the first instance (capital) in the set of instances
-    string children{input_set.erase(0, 1)}, children_copy; # children are all instances, except the root
+    char root{input_set.at(0)}; // root is the first instance (capital) in the set of instances
+    string children{input_set.erase(0, 1)}, children_copy; // children are all instances, except the root
     
     // For-loop pairs one node in the children_nodes_list with the root node at each iteration
       // Then we evaluate the cost of the pair and if the cost of this pair is (still) below the limit.
