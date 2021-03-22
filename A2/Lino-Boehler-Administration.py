@@ -4,7 +4,7 @@ Created on Sun Mar 21 18:12:01 2021
 
 @author: Lino
 """
-import sys
+
 import itertools
 import numpy as np
 import collections
@@ -22,12 +22,12 @@ parser.add_argument("-o","--optimize",
 args = parser.parse_args()
 
 ## Assigning new names to input variables
-path=args.file
+#path=args.file
 opt_flag=args.optimize
 
+#opt_flag=True
 
-
-#path="Administration-test1.in.txt"
+path="Administration-test1.in.txt"
 
 with open(path) as f:
     data=f.readlines()
@@ -78,7 +78,7 @@ def branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_list,col_names, op
    
     result_list=[]
     curent_paths_list=[]
-    
+    best_ls=[]
     for ind in range(len(city_l_copy)):
         
         city_b=city_list[ind]
@@ -102,21 +102,20 @@ def branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_list,col_names, op
                             best = curent_cost
                             best_path=copy_path
                             path_list=[best,best_path]
-                            print(best)
-                            print(best_path)
+                            print(f"new best Partition: \n {best_path} \n cost: {best}")
                     curent_paths_list.append(copy_path)
                     
                     
                 else:
                     
-                    result_list=branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_l_copy,col_names, opt_flag,copy_path,best)
+                    branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_l_copy,col_names, opt_flag,copy_path,best)
             else:
                 if len(curent_path) <= state_nr/2:
                     curent_paths_list.append(curent_path)
             
              
             
-            
+            #print(path_list)
              
         else:
             continue
@@ -125,10 +124,21 @@ def branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_list,col_names, op
     if len(curent_paths_list) > 0:
        path_list.extend(curent_paths_list)
    
-   
+    
     return path_list
     
 
-rs=branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_list,col_names, opt_flag,curent_path,best)
- 
-    
+results=branch_n_bound(state_nr,cost_dict,path_list,cost_max,city_list,col_names, opt_flag,curent_path,best)
+rs=[]
+if opt_flag == False:
+    for lst in results:
+        path=[''.join(tups) for tups in lst] 
+        conc=" ".join(path)
+        print(conc)
+        
+        rs.append(conc)
+
+
+
+        
+            
