@@ -11,7 +11,9 @@ using namespace std;
 
 // Forward declarations
 string concat_chars(size_t, size_t, const string&);
-void read_file(int, char**, bool&, int&, int&, map<string, int>&, string&);
+ifstream parse_cmd_args(int, char**, bool&);
+void read_subpart(const size_t, const string&, int&, map<string, int>&, string&);
+void read_file(ifstream&, int&, map<string, int>&, string&);
 
 // START Branch and Bound algorithm
 vector<string> branchNbound(string input_set, const map<string, int> &costMatrix, int costLimit_parameter,
@@ -75,17 +77,11 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
       solutions.push_back(current_path);
       return vector<string>{};
     }
-    // If only optimal solution required, update currently best solution
-    if(current_cost < costLimit)
+    // If only optimal cost required, update currently best cost
+    if(current_cost <= costLimit)
     {
-      solutions = vector<string>{current_path};
+      solutions = vector<string>{to_string(current_cost)};
       costLimit = current_cost;
-      return vector<string>{};
-    }
-    // If there is more than one optimal solution, add it to solution list
-    if(current_cost == costLimit)
-    {
-      solutions.push_back(current_path);
       return vector<string>{};
     }
   }
@@ -102,22 +98,27 @@ int main(int argc, char **args)
   bool optimize{false};
   map<string, int> costMatrix;
   string capitals;
-  int numCapitals, costLimit;
+  int costLimit;
   vector<string> solutions;
+  ifstream inputFile;
 
-  // Read in parameters and cost matrix
-  read_file(argc, args, optimize, numCapitals, costLimit, costMatrix, capitals);
+  // Parse command line arguments and read in file
+  inputFile = parse_cmd_args(argc, args, optimize);
+  read_file(inputFile, costLimit, costMatrix, capitals);
 
   // Call branch N bound function
   solutions = branchNbound(capitals, costMatrix, costLimit, optimize);
   
   // Print solutions, the branch and bound is implemented such that the lexicographical order is maintained
-  for(auto& solution : solutions) 
+  if(!optimize) 
   {
-    for(int pos{0}; pos < numCapitals; pos += 2)
-      cout << solution.substr(pos, 2) << " ";
-    cout << '\n';
-  }
+    for(auto& solution : solutions) 
+    {
+      for(size_t pos{0}; pos < solution.size(); pos += 2)
+        cout << solution.substr(pos, 2) << " ";
+      cout << '\n';
+    }
+  } else cout << solutions.at(0) << endl;
 
   return 0;
 }
@@ -129,17 +130,13 @@ string concat_chars(size_t pos1, size_t pos2, const string &str)
   return a + b;
 } 
 
-// This function reads in the data from the file using so-called streams.
-  // Streams always read in the next word in a line string.
-    // By iterating this process until the end of string has been reached, I can read in desired words/numbers.
-      // I did not use a fancy built-in function, but implemented it on my own.
-void read_file(int argc, char **args, bool &optimize, int &numCapitals,
-               int &costLimit, map<string, int> &costMatrix, string &capitals)
+// Parse command line arguments and open file
+ifstream parse_cmd_args(int argc, char** args, bool &optimize) 
 {
   ifstream inputFile;
   bool file_exists{false};
-  
-  // START exceptions handling
+
+  // Exceptions handling and args parsing
   if (argc != 2 && argc != 3)
     throw runtime_error("Too few/many command-line arguments:\n- flag \'-o\' for optimization! (optional)\n- provide one input file! (compulsory)");
 
@@ -148,7 +145,7 @@ void read_file(int argc, char **args, bool &optimize, int &numCapitals,
     if (static_cast<string>(*arg) == "-o")
       optimize = true;
 
-    if (filesystem::exists(static_cast<string>(*arg)))
+    if (__fs::filesystem::exists(static_cast<string>(*arg)))
     {
       inputFile.open(*arg);
       file_exists = true;
@@ -156,34 +153,55 @@ void read_file(int argc, char **args, bool &optimize, int &numCapitals,
   }
   if (!file_exists)
     throw runtime_error("No file found, please check file name!");
-  // END
 
+  return inputFile;
+}
+
+// Removes substring of input_string until including char '-'
+void dele_substr(string &line)
+{
+  size_t pos{0};
+  for (; line.at(pos) != '-'; pos++);
+  line.erase(0, pos + 1);
+}
+
+// This function reads in the data from the file using so-called streams.
+  // Streams always read in the next word in a line string.
+    // By iterating this process until the end of string has been reached, I can read in desired words/numbers.
+      // I did not use a fancy built-in function, but implemented it on my own.
+void read_file(ifstream &inputFile, int &costLimit, map<string, int> &costMatrix, string &capitals)
+{
   // Variable declarations
   size_t lineCount{0};
   string line;
-  bool first{true};
 
   while (getline(inputFile, line))
-  {
-    stringstream sstr;
-    string strbuff{""};
-
-    // START preprocessings
+  { 
+    // Increment line counter
     lineCount++;
-    // If in costMatrix: remove entries until including char '-'
-    // to read in only entries in upper triangular part
-    if (lineCount > 2)
-    {
-      size_t pos{0};
-      for (; line.at(pos) != '-'; pos++);
-      line.erase(0, pos + 1);
-    }
-    sstr << line;
-    // END preprocessings
+    // Remove substring to only read in upper triangular part of costMatrix
+    if(lineCount > 2) dele_substr(line);
+    // Read line_string into stringstream
+    // Check which part of the file we have and read it in
+    read_subpart(lineCount, line, costLimit, costMatrix, capitals);
+  }
+  inputFile.close();
+}
 
+// Implement switch function
+void read_subpart(const size_t lineCount, const string& line, int& costLimit, map<string, int>& costMatrix, string& capitals)
+{ 
+  static bool first{true};
+  static int numCapitals;
+  string strbuff{""};
+  stringstream sstr;
+  // Read line_string into stringstream
+  sstr << line;
+
+  switch(lineCount) 
+  {
     // Read in capital number and cost limit
-    if (lineCount == 1)
-    {
+    case 1:
       while (!sstr.eof())
       {
         sstr >> strbuff;
@@ -195,10 +213,10 @@ void read_file(int argc, char **args, bool &optimize, int &numCapitals,
         if (!first)
           costLimit = stoi(strbuff);
       }
-    }
+      break;
+    
     // Read in capital names
-    if (lineCount == 2)
-    {
+    case 2:
       while (!sstr.eof())
       {
         sstr >> strbuff;
@@ -206,10 +224,10 @@ void read_file(int argc, char **args, bool &optimize, int &numCapitals,
           throw runtime_error("This program only works for one character capital names!");
         capitals.push_back(strbuff.at(0));
       }
-    }
+      break;
+    
     // Read upper triangular part of cost matrix into map
-    if (lineCount > 2)
-    {
+    default:
       size_t rowNum{lineCount - 3}, colNum{rowNum + 1};
       while (!sstr.eof())
       {
@@ -219,7 +237,5 @@ void read_file(int argc, char **args, bool &optimize, int &numCapitals,
         costMatrix[concat_chars(rowNum, colNum, capitals)] = stoi(strbuff);
         colNum++;
       }
-    }
   }
-  inputFile.close();
 }
