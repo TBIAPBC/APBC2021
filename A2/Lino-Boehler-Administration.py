@@ -22,12 +22,12 @@ parser.add_argument("-o","--optimize",
 args = parser.parse_args()
 
 ## Assigning new names to input variables
-#path=args.file
+path=args.file
 opt_flag=args.optimize
 
 #opt_flag=True
 
-path="Administration-test1.in.txt"
+#path="Administration-test1.in.txt"
 
 with open(path) as f:
     data=f.readlines()
