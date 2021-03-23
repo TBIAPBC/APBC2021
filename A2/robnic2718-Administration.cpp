@@ -145,7 +145,7 @@ ifstream parse_cmd_args(int argc, char** args, bool &optimize)
     if (static_cast<string>(*arg) == "-o")
       optimize = true;
 
-    if (__fs::filesystem::exists(static_cast<string>(*arg)))
+    if (filesystem::exists(static_cast<string>(*arg)))
     {
       inputFile.open(*arg);
       file_exists = true;
