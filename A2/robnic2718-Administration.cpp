@@ -16,14 +16,14 @@ void read_subpart(const size_t, const string&, int&, map<string, int>&, string&)
 void read_file(ifstream&, int&, map<string, int>&, string&);
 
 // START Branch and Bound algorithm
-vector<string> branchNbound(string input_set, const map<string, int> &costMatrix, int costLimit_parameter,
+vector<string> branchNbound(string input_set, const map<string, int> &cost_matrix, int costLimit_parameter,
                             bool optimize = false, int current_cost = 0, string current_path = "") 
 { 
   /*
     Please note that the costMatrix is passed as a reference, so it is not being copied in each recurive call, but just the memory
     address is passed so that the current scope of a certain recursive call has access to the costMatrix.
   */
-  
+
   // If input data is empty, return empty set
   // Keep track of recursion count
   static size_t recursion_count{0};
@@ -34,6 +34,7 @@ vector<string> branchNbound(string input_set, const map<string, int> &costMatrix
   // Initialize static variables ("one-lifetime variables", i.e. variables are only initialized once)
   static int costLimit{costLimit_parameter};
   static vector<string> solutions;
+  static map<string, int> costMatrix{cost_matrix};
   
   // This approach follows the idea of a DEPTH-FIRST-SEARCH
   // --> branch until either the costLimit is not satisfied anymore or a child-node has been reached
