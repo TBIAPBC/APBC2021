@@ -138,7 +138,7 @@ def main(args):
 
 def add_args(parser):
     parser.add_argument("filename", help="Format must be HV or HVD.")
-    parser.add_argument("-t", action="store_true", help="Print all best path.")
+    parser.add_argument("-t", action="store_true", help="Print all best paths")
     parser.add_argument("-d", action="store_true", help="Dummy flag - just implemented for specification's sake")
     parser.add_argument("--verbose",action="store_true",help="Print verbose output")
 
