@@ -2,6 +2,7 @@
 import argparse
 import sys
 import numpy as np
+import time
 
 class Manhattan:
 
@@ -125,14 +126,17 @@ class Manhattan:
 
 
 def main(args):
+    start = time.time()
     manhattan = Manhattan(args.filename)
+    print(time.time() - start)
     manhattan.dynamic_solver()
-    manhattan.back_track()
     if args.verbose:
+        manhattan.back_track()
         manhattan.print()
     else:
         print("%.2f" % np.round(manhattan.get_best_score(),2))
         if args.t:
+            manhattan.back_track()
             for solution in manhattan.solutions:
                 print(solution)
 
