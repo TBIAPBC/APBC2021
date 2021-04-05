@@ -67,12 +67,12 @@ class Manhattan:
                     current="diagonal"
 
                 if current=="north":
-                    self.northWeights= self.northWeights + weights
+                    self.northWeights.append(weights)
                     nEast=nEast+1
                 if current=="east":
-                    self.eastWeights= self.eastWeights + weights
+                    self.eastWeights.append(weights)
                 if current=="diagonal":
-                    self.diagonalWeights= self.diagonalWeights + weights
+                    self.diagonalWeights.append(weights)
         self.create_weight_matrices()
         f.close()
 
@@ -126,9 +126,7 @@ class Manhattan:
 
 
 def main(args):
-    start = time.time()
     manhattan = Manhattan(args.filename)
-    print(time.time() - start)
     manhattan.dynamic_solver()
     if args.verbose:
         manhattan.back_track()
