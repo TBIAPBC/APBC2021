@@ -14,6 +14,7 @@ public class robnic2718_Manhattan
   static int rowCount = 0, colCount = 0, coldimNS = 0, rowdimWE = 0;
   // Instance variables //
   //[row, column], automatically initialised with 0s
+  // The variable current position is a 2-dimensional array that keeps track of the current position of the "tourist"
   int[] currPos;
   double[][] dpMatrix;
   
@@ -23,7 +24,7 @@ public class robnic2718_Manhattan
     currPos = new int[] {1, 1};
     dpMatrix = new double[rowdimWE][coldimNS];
 
-    // Initialise DP-Matrix
+    // Initialise DP-Matrix, i.e. assign cumulative weights on first row and column
     for(int index = 0; index < rowdimWE-1; index++)
       dpMatrix[index+1][0] = dpMatrix[index][0] 
                              + northSouth.elementAt(index).elementAt(0);
@@ -37,7 +38,9 @@ public class robnic2718_Manhattan
   {
     File inputFile;
     
+    // Parse command line arguments and assing filename to variable inputFile
     inputFile = parse_cmd_args(args);
+    // Read in data from file into matrices in line 11
     process_file(inputFile);
     
     // Initialise new instance of Manhattan Tourist Problem
@@ -45,6 +48,7 @@ public class robnic2718_Manhattan
     double result;
     result = tourist.explore_optimalPath();
     
+    // Check if result can be rounded to integer and if yes do it
     if(result%1 == 0)
       System.out.println((int)result);
     else
@@ -56,6 +60,7 @@ public class robnic2718_Manhattan
       System.out.println(tourist.backtrack());
   }
   
+  // Performs backtracking until currPos is [0,0], i.e. until the upper left corner of DPmatrix has been reached
   private String backtrack()
   {
     String bestPath = new String("");
@@ -66,6 +71,24 @@ public class robnic2718_Manhattan
     return bestPath;
   }
   
+  /* The step_back method checks from the perspective of the current position in the DPmatrix,
+  which weight of the possible paths leading to the starting point of the tourist could create the weight
+  at the current position pointed at by the index array currPos (see line 18). Each weight is converted from
+  double to float format in order to account for errors arising from floating point arithmetics. Otherwise a comparison
+  with "==" would always result in the boolean value false.
+  Example: 
+  a) dpMatrix[currPos[0]][currPos[1]] … outputs the current score of the DPmatrix, where the tourist finds himself, when
+  he walks back. 
+  b) backtrack_weight('N') … outputs the weight of the street, from the perspective of the tourist's current position, when walking
+  into the direction of North (opposite of South, because the tourist walks back).
+  c) dpMatrix[currPos[0] - 1][currPos[1]] … outputs the score in the DPmatrix where the tourist would find himself after walking 
+  North street.
+  By checking whether the current position's score (a) minus the weight of the North path (b) equals the score of the position after
+  walking the North street (c) we can infer that the the North path is the optimal path to go. However we output 'S' for South since we
+  walked into the back direction.
+  currPos[0] … gives the row position
+  currPos[1] … gives the col position
+  As an example [currPos[0]-1,currPos[1]] gives us the position one row above the current position.*/
   private char step_back()
   {
     if(currPos[0] != 0)
@@ -99,6 +122,7 @@ public class robnic2718_Manhattan
     return 'x';
   }
   
+  // Check if backtracking has been finished, by checking whether we reached the upper left corner of DPmatrix
   private boolean reached_start()
   {
     if(currPos[0] == 0 && currPos[1] == 0)
@@ -107,6 +131,12 @@ public class robnic2718_Manhattan
     return false;
   }
   
+  /* Output the weight of the streets from the perspective of the current position in the DPmatrix.
+  In order to avoid accessing not existant paths, whenever we are the a border of the DPmatrix, we avoid
+  accessing a non-existant weight into the corresponding directions, by letting the method backtrack_weight
+  output NEGATIVE_INFINITY, such that this direction will never be an option for maximizing the score.
+  If we have no diagonal weights read in we immediately return NEGATIVE_INFINITY, such that the diagonal path will never
+  be an option. (see diagEdges (boolean variable) in line 153)*/
   private double backtrack_weight(char direction)
   {
     switch(direction)
@@ -134,6 +164,7 @@ public class robnic2718_Manhattan
     return 0.0;
   }
   
+  // Fill up the initialized DPmatrix with the cumulating weights of the streets
   private double explore_optimalPath()
   { 
     while(!reached_goal())
@@ -150,6 +181,9 @@ public class robnic2718_Manhattan
     return dpMatrix[rowdimWE-1][coldimNS-1];
   }
   
+  /* This method retrieves the weights of all possible paths from the perspective of the current position in
+  the DPmatrix using the helper method get_weight. It then finds the maximum cumulative weight and enters the weight
+  into the DPmatrix. */
   private void get_maxNupdate()
   {
     double[] pathWeights = new double[] {get_weight('S'), get_weight('E'), get_weight('D')};
@@ -163,14 +197,19 @@ public class robnic2718_Manhattan
     dpMatrix[currPos[0]][currPos[1]] = maximum;
   }
   
+  // Check whether the current position has reached the lower right corner of the DPmatrix
   private boolean reached_goal()
   {
+    /* we only need to check whether we reached the last row in the DPmatrix since we fill up
+    of the DPmatrix rowwise after initializing. */
     if(currPos[0] == rowdimWE)
       return true;
     
     return false;
   }
-
+  
+  /* Get the cumulative weights, i.e. weight/score at current position plus weight after walking
+  into the chosen direction from the perspective of the current position in the DPmatrix.*/
   private double get_weight(char direction)
   {
     switch(direction)
@@ -214,20 +253,26 @@ public class robnic2718_Manhattan
     
     try
     {
+      // Scan through content of file using class Scanner
       Scanner fileScan = new Scanner(inputFile);
       
+      // Keep iterating through lines in the file until there is no further line
       while(fileScan.hasNextLine())
       { 
         line = fileScan.nextLine();
         lineScan = new Scanner(line);
+        // If lines contains '#' at any point or is empty jump to the next line
         if(check_line(line))
           continue;
         
+        // Process the North-South and East-West weight matrices
         processing_Done = process_HV(lineScan);
         
+        // Break out of while loop if NS and EW weights have been processed
         if(processing_Done)
           break;
       }
+      // If -d is provided also read in diagonal weights matrix
       if(diagEdges)
       {
         diagonals = new Vector<Vector<Double>>();
