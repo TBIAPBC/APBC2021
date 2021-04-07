@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr  1 11:27:09 2021
+
+@author: milan
+"""
+import argparse
+import numpy as np
+import itertools
+import sys
+
+def read_file(filename, with_diag):
+    
+    with open(filename, "r") as fh_file:
+        first_line_found = False
+        down_check = False
+        right_check = False
+        
+        dimension = 0
+        north_south = []
+        west_east = []
+        
+        if with_diag:
+            diagonal_matrix = []
+        for l in fh_file.readlines():
+            if l[0] != "#" and l != "\n":
+                nl = l.rstrip("\n")
+                line = nl.split(" ")
+                line = [l for l in line if l]
+                
+                if line[0].isdigit():
+                    line = [int(a) for a in line]
+                else:
+                    line = [float(a) for a in line]
+                
+                if first_line_found == False:
+                    dimension = len(line)
+                    first_line_found = True
+                
+                if len(line) == dimension and down_check == False:
+                    north_south.append(line)
+                    if len(north_south) == dimension-1:
+                        down_check = True
+                
+                elif len(line) == dimension-1 and down_check and right_check == False:
+                    west_east.append(line)
+                    if len(west_east) == dimension:
+                        right_check = True
+                
+                elif with_diag and right_check:
+                    diagonal_matrix.append(line)
+    
+    #Check if all the matrices are correct
+    north_south_check = False
+    west_east_check = False
+    
+    if len(north_south) == dimension -1:
+        north_south_check = True
+    
+    if len(west_east) == dimension:
+        west_east_check = True
+    
+    if with_diag:
+        diag_check = False
+        if len(diagonal_matrix) == dimension -1:
+            diag_check = True
+    
+    if north_south_check:
+        if west_east_check:
+            
+    
+            if with_diag:
+                if diag_check:
+                    return north_south, west_east, diagonal_matrix
+                else:
+                    print("Error found in diagonal score matrix!", file= sys.stderr)
+                    quit()
+            else:
+                return north_south, west_east, []
+        else:
+            print("Error found in left-right score matrix!", file= sys.stderr)
+            quit()
+    else:
+        print("Error found in top-down score matrix!", file= sys.stderr)
+        quit()
+
+
+def manhattan(north_south, west_east, diagonal_matrix, args):
+    n = len(north_south[0])
+    if isinstance(north_south[0][0], int):
+        trip = np.zeros((n, n), dtype=np.int)
+    else:
+        trip = np.zeros((n, n), dtype=np.float)
+    
+    #initialise first row and first column
+    #first row
+    for g in range(len(trip[0])-1):
+        trip[0, g+1] = trip[0, g] + west_east[0][g]
+        
+    #first column
+    for h in range(len(trip)-1):
+        trip[h+1, 0] = trip[h, 0] + north_south[h][0]
+    
+    #rest of the matrix
+    if args.d:
+        for i, j in itertools.product(range(1, trip.shape[0]), range(1, trip.shape[1])):
+            down = trip[i-1, j] + north_south[i-1][j]
+            right = trip[i, j-1] + west_east[i][j-1]
+            diagonal = trip[i-1, j-1] + diagonal_matrix[i-1][j-1]
+            trip[i, j] = max(down, right, diagonal)
+
+    else:
+        for i, j in itertools.product(range(1, trip.shape[0]), range(1, trip.shape[1])):
+            down = trip[i-1, j] + north_south[i-1][j]
+            right = trip[i, j-1] + west_east[i][j-1]
+            trip[i, j] = max(down, right)
+    
+    return trip
+
+def route(trip, with_diag, north_south, west_east, diagonal_matrix, path=""):
+    point = trip[-1][-1]
+    
+    if point == 0:
+        return path
+    else:
+        #initialise variables
+        n = 0
+        w = 0
+        d = 0
+        from_north = 0
+        from_west = 0
+        from_diag = 0
+        i, j = np.unravel_index(trip.argmax(), trip.shape)
+        
+        #get values from the respective score matrices and in the trip matrix for comparison
+        if i - 1 >= 0:
+            n = north_south[i-1, j]
+            from_north = trip[i-1, j]
+        
+        if j - 1 >= 0:
+            w = west_east[i, j-1]
+            from_west = trip[i, j-1]
+        
+        if with_diag and i - 1 >= 0 and j - 1 >= 0:
+            d = diagonal_matrix[i-1, j-1]
+            from_diag = trip[i-1, j-1]
+        
+        #compare scores and determine the path (going south is preferred)
+        if from_north + n == point:
+            new_path = "S" + path
+            new_trip = np.delete(trip, -1, axis=0)
+        elif from_west + w == point:
+            new_path = "E" + path
+            new_trip = np.delete(trip, -1, axis=1)
+        elif with_diag and from_diag + d == point:
+            new_path = "D" + path
+            n_trip = np.delete(trip, -1, axis=0)
+            new_trip = np.delete(n_trip, -1, axis=1)
+        
+    return route(new_trip, with_diag, north_south, west_east, diagonal_matrix, new_path)
+
+def main(args):
+    
+    north_south, west_east, diagonal_matrix = read_file(args.filename, args.d)
+    
+    trip = manhattan(north_south, west_east, diagonal_matrix, args)
+    
+    if isinstance(trip[-1][-1], float):
+        print(round(trip[-1][-1], 2))
+    else:
+        print(trip[-1][-1])
+    
+    if args.t:
+        manhattan_path = route(trip, args.d, np.array(north_south), np.array(west_east), np.array(diagonal_matrix))
+        print(manhattan_path)
+    return
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = "Manhattan Tourist Problem")
+    parser.add_argument("filename", help = "Input text file")
+    parser.add_argument("-d", action = "store_true", help = "Include diagonal_matrix paths.")
+    parser.add_argument("-t", action = "store_true", help = "Print the path from start to finish")
+    main(parser.parse_args())
