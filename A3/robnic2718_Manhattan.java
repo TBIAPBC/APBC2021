@@ -289,6 +289,19 @@ public class robnic2718_Manhattan
       }
       rowdimWE = rowCount;
       
+      // Check if diagonal weights are present in file
+       // even if option -d has not been provided and throw Exception
+      while(fileScan.hasNextLine()) {
+      	line = fileScan.nextLine();
+      	if(check_line(line))
+      		try {
+      		  throw new Exception("Option -d was not specified although file contains diagonal-weights-matrix.");
+      		} catch(Exception e) {
+              System.out.println(e.getMessage());
+              System.exit(0);
+      		  }
+      }
+
       fileScan.close();
     } 
       catch(FileNotFoundException e)
@@ -338,7 +351,7 @@ public class robnic2718_Manhattan
     while(lineScan.hasNextDouble())
       rowVec.addElement(lineScan.nextDouble());
       
-    diagonals.addElement(new Vector<Double>(rowVec)); 
+    diagonals.addElement(new Vector<Double>(rowVec));
     rowVec.clear();
     
     lineScan.close();
