@@ -32,6 +32,7 @@ list_weigths=[list_south,list_east]
 if diagonal == True:
     list_diag=[]
     list_weigths.append(list_diag)
+
 with open (path_file) as f:
    lines=f.readlines()
    counter=0
@@ -39,10 +40,9 @@ with open (path_file) as f:
    n=0
    row_counter=0
    for l in lines:
+        #skiping empyt ines and lines starting with # comments
         if l[:1] == "#" or l == "\n":
-            #switch=1
-            #print(f"line coment: {l}")
-            #print(f"kk{ind}\n")
+            
             continue
        
         else:
@@ -52,7 +52,7 @@ with open (path_file) as f:
             for i in l:
                 if i < 1:
                     counter+=1
-            #print(f"mat:{l}\tswitch:{switch}")
+            
             
             if len(list_weigths[0])==0:
                 n=len(l)
@@ -66,33 +66,20 @@ with open (path_file) as f:
                         ind=2
                     else:
                         break
-            #if ind-1 > len(list_weigths):
-                #print(l)
-                #break
-            #print(f"mat:{l}\tindex:{ind}")
-            #if switch == 1:
-                #ind+=1
-            #print(list_weigths)
             
-            
-                #print(f"n{n}")
-                #if switch == 0:
-                    #ind=1
-        
-            #print(f"ind: {ind}")
-            #switch=0
             list_weigths[ind].append(l)
        
        
             
             
             
-#print(list_weigths)
+
 
 
 matrix = np.zeros(shape=(n,n),dtype=float)
 def manhatten (list_weigths,diagonal,):
-    #global matrix = np.ndarray(shape=(n,n),sdtype=float)
+    
+    # numpy arrays holding the edge weigths 
     nord_south=np.array(list_weigths[0])
     
     west_east=np.array(list_weigths[1]) 
@@ -100,30 +87,37 @@ def manhatten (list_weigths,diagonal,):
     if diagonal == True :
         diagonal_weight=np.array(list_weigths[2])
     
+    # matrix with the longest paths to each node 
     pos_matrix=np.empty(shape=(n,n),dtype=object)
-    #print(pos_matrix)
+    
+    # a list holding the path with directional strings :"E", "S" and ev. "D"
+    # using deque data structure from collections module instead of list, since more convinient adn efficent.
+    # appending from the left in deque lies in O(1) for a list it is O(n)
     longest_path=deque([])
     
+    
+    # calcluating the longest paths for the first column ...
     for i in range(1,n):
         matrix[i,0]=nord_south[i-1,0]+matrix[i-1,0]
         pos_matrix[i,0]="S"
-    
+    #... and firts row
     for j in range (1,n):
         matrix[0,j]= west_east[0,j-1]+matrix[0,j-1]
         pos_matrix[0,j]="E"
         
     
-        
+    # going over each matrix element row by row 
     for i in range(1,n):
         
         for j in range(1,n):
             
             
-            
+            # if total path length from above longer then total path length from left matrix entry 
             if matrix[i-1,j]+ nord_south[i-1,j] >= matrix[i,j-1]+ west_east[i,j-1]:
-                if (i ==2) and (j == 2):
-                    print(f"here 1!{i}{j}")
+                
+               
                 if diagonal == True:
+                     # if diagonal movements allowed check if diagonal path is longer then the path from above (north)
                     if  matrix[i-1,j-1] + diagonal_weight[i-1,j-1] > matrix[i-1,j] + nord_south[i-1,j] :
                         matrix[i,j]= matrix[i-1,j-1] + diagonal_weight[i-1,j-1]
                         pos_matrix[i,j]="D"
@@ -131,11 +125,15 @@ def manhatten (list_weigths,diagonal,):
                         matrix[i,j]= nord_south[i-1,j] + matrix[i-1,j]
                         pos_matrix[i,j]="S"
                 
+                # if path from north is longer or diagnola moves are not allowed
+                #then add maximal path length into the matrix of the curent position 
+                # and enter the direction from where the longest path to curent postion into the matrix 
+                #pos_matrix at the indices of curent position 
                 else:
                     matrix[i,j]= nord_south[i-1,j] + matrix[i-1,j]
                     pos_matrix[i,j]="S"
                 
-                
+            # if the total path length from east (left matrix entry ) is longer 
             else:
                 
                 if diagonal == True:
@@ -149,7 +147,9 @@ def manhatten (list_weigths,diagonal,):
                 else:
                     matrix[i,j]= matrix[i,j-1]+ west_east[i,j-1]
                     pos_matrix[i,j]="E"
-               #print( pos_matrix[i,j])
+   
+    # back tracking over the "pos_matrix " thus going back along the matrix according to the directionla
+    #informtion stored in the matrix entries 
     if best_path == True:
         i=n-1
         j=n-1
