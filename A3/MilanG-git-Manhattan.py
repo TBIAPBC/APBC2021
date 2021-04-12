@@ -131,8 +131,10 @@ def route(trip, with_diag, north_south, west_east, diagonal_matrix, path=""):
         from_north = 0
         from_west = 0
         from_diag = 0
-        i, j = np.unravel_index(trip.argmax(), trip.shape)
-        
+        #alternative indexing
+        #i, j = np.unravel_index(trip.argmax(), trip.shape)
+        i = len(trip)-1
+        j = len(trip[-1])-1
         #get values from the respective score matrices and in the trip matrix for comparison
         if i - 1 >= 0:
             n = north_south[i-1, j]
@@ -172,6 +174,7 @@ def main(args):
         print(trip[-1][-1])
     
     if args.t:
+        sys.setrecursionlimit(max(len(north_south[0])+len(west_east), 1000))
         manhattan_path = route(trip, args.d, np.array(north_south), np.array(west_east), np.array(diagonal_matrix))
         print(manhattan_path)
     return
