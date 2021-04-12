@@ -8,6 +8,8 @@ import numpy as np
 import argparse
 from collections import deque
 
+
+
 parser = argparse.ArgumentParser(description='')
 
 parser.add_argument("file", help="pah to input file ")
@@ -118,7 +120,7 @@ def manhatten (list_weigths,diagonal,):
                
                 if diagonal == True:
                      # if diagonal movements allowed check if diagonal path is longer then the path from above (north)
-                    if  matrix[i-1,j-1] + diagonal_weight[i-1,j-1] > matrix[i-1,j] + nord_south[i-1,j] :
+                    if  matrix[i-1,j-1] + diagonal_weight[i-1,j-1] >= matrix[i-1,j] + nord_south[i-1,j] :
                         matrix[i,j]= matrix[i-1,j-1] + diagonal_weight[i-1,j-1]
                         pos_matrix[i,j]="D"
                     else:
@@ -137,7 +139,7 @@ def manhatten (list_weigths,diagonal,):
             else:
                 
                 if diagonal == True:
-                    if  matrix[i-1,j-1] + diagonal_weight[i-1,j-1] > matrix[i,j-1]+ west_east[i,j-1]:
+                    if  matrix[i-1,j-1] + diagonal_weight[i-1,j-1] >= matrix[i,j-1]+ west_east[i,j-1]:
                         matrix[i,j]= matrix[i-1,j-1] + diagonal_weight[i-1,j-1]
                         pos_matrix[i,j]="D"
                     else:
@@ -164,7 +166,7 @@ def manhatten (list_weigths,diagonal,):
                 i-=1
                 j-=1
         print(f"the longest path is: {longest_path}")
-    print(f"path length: {matrix[n-1,n-1]}")
+    print(f"path length: {round(matrix[n-1,n-1],2)}")
     #print(matrix)
     return
 
