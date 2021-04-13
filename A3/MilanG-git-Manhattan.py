@@ -22,8 +22,6 @@ def read_file(filename, with_diag):
         
         matrix_counter = 0
         
-        
-        
         for l in fh_file.readlines():
             if l[0] != "#" and l != "\n":
                 nl = l.rstrip("\n")
@@ -35,6 +33,7 @@ def read_file(filename, with_diag):
                 else:
                     line = [float(a) for a in line]
                 
+                #check in which matrix block one is in the file
                 if first_line_found == False:
                     dimension = len(line)
                     first_line_found = True
@@ -46,6 +45,7 @@ def read_file(filename, with_diag):
                 if len(west_east) == len(north_south) + 1:
                     matrix_counter = 3
                 
+                #add the line to the respective matrix
                 if matrix_counter == 1:
                     north_south.append(line)
                 
@@ -109,7 +109,6 @@ def route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path="
         from_west = 0
         from_diag = 0
         
-        
         #get values from the respective score matrices and in the trip matrix for comparison
         if i - 1 >= 0:
             n = north_south[i-1, j]
@@ -137,7 +136,7 @@ def route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path="
             i = i-1
             j = j-1
             
-    return route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path)#new_path)
+    return route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path)
 
 def main(args):
     
