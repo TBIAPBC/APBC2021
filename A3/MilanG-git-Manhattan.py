@@ -118,10 +118,10 @@ def manhattan(north_south, west_east, diagonal_matrix, args):
     
     return trip
 
-def route(trip, with_diag, north_south, west_east, diagonal_matrix, path=""):
-    point = trip[-1][-1]
+def route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path=""):
+    point = trip[i][j]
     
-    if point == 0:
+    if i == 0 and j == 0:
         return path
     else:
         #initialise variables
@@ -131,10 +131,8 @@ def route(trip, with_diag, north_south, west_east, diagonal_matrix, path=""):
         from_north = 0
         from_west = 0
         from_diag = 0
-        #alternative indexing
-        #i, j = np.unravel_index(trip.argmax(), trip.shape)
-        i = len(trip)-1
-        j = len(trip[-1])-1
+        
+        
         #get values from the respective score matrices and in the trip matrix for comparison
         if i - 1 >= 0:
             n = north_south[i-1, j]
@@ -150,17 +148,19 @@ def route(trip, with_diag, north_south, west_east, diagonal_matrix, path=""):
         
         #compare scores and determine the path (going south is preferred)
         if from_north + n == point:
-            new_path = "S" + path
-            new_trip = np.delete(trip, -1, axis=0)
+            path = "S" + path
+            i = i -1
+            j = j
         elif from_west + w == point:
-            new_path = "E" + path
-            new_trip = np.delete(trip, -1, axis=1)
+            path = "E" + path
+            i = i
+            j = j-1
         elif with_diag and from_diag + d == point:
-            new_path = "D" + path
-            n_trip = np.delete(trip, -1, axis=0)
-            new_trip = np.delete(n_trip, -1, axis=1)
-        
-    return route(new_trip, with_diag, north_south, west_east, diagonal_matrix, new_path)
+            path = "D" + path
+            i = i-1
+            j = j-1
+            
+    return route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path)#new_path)
 
 def main(args):
     
@@ -175,7 +175,7 @@ def main(args):
     
     if args.t:
         sys.setrecursionlimit(max(len(north_south[0])+len(west_east), 1000))
-        manhattan_path = route(trip, args.d, np.array(north_south), np.array(west_east), np.array(diagonal_matrix))
+        manhattan_path = route(trip, args.d, np.array(north_south), np.array(west_east), np.array(diagonal_matrix), len(trip)-1, len(trip[0])-1)
         print(manhattan_path)
     return
 
