@@ -14,15 +14,16 @@ def read_file(filename, with_diag):
     
     with open(filename, "r") as fh_file:
         first_line_found = False
-        down_check = False
-        right_check = False
-        
+                
         dimension = 0
         north_south = []
         west_east = []
+        diagonal_matrix = []
         
-        if with_diag:
-            diagonal_matrix = []
+        matrix_counter = 0
+        
+        
+        
         for l in fh_file.readlines():
             if l[0] != "#" and l != "\n":
                 nl = l.rstrip("\n")
@@ -37,61 +38,37 @@ def read_file(filename, with_diag):
                 if first_line_found == False:
                     dimension = len(line)
                     first_line_found = True
+                    matrix_counter = 1
                 
-                if len(line) == dimension and down_check == False:
+                if len(line) == dimension -1 and matrix_counter == 1:
+                    matrix_counter = 2
+                
+                if len(west_east) == len(north_south) + 1:
+                    matrix_counter = 3
+                
+                if matrix_counter == 1:
                     north_south.append(line)
-                    if len(north_south) == dimension-1:
-                        down_check = True
                 
-                elif len(line) == dimension-1 and down_check and right_check == False:
+                if matrix_counter == 2:
                     west_east.append(line)
-                    if len(west_east) == dimension:
-                        right_check = True
                 
-                elif with_diag and right_check:
+                if matrix_counter == 3:
                     diagonal_matrix.append(line)
     
-    #Check if all the matrices are correct
-    north_south_check = False
-    west_east_check = False
+    if len(diagonal_matrix) > 1 and with_diag == False:
+        print("Diagonal Matrix detected without -d option given.\nContinuing calculation without using the diagonal matrix.")
     
-    if len(north_south) == dimension -1:
-        north_south_check = True
-    
-    if len(west_east) == dimension:
-        west_east_check = True
-    
-    if with_diag:
-        diag_check = False
-        if len(diagonal_matrix) == dimension -1:
-            diag_check = True
-    
-    if north_south_check:
-        if west_east_check:
-            
-    
-            if with_diag:
-                if diag_check:
-                    return north_south, west_east, diagonal_matrix
-                else:
-                    print("Error found in diagonal score matrix!", file= sys.stderr)
-                    quit()
-            else:
-                return north_south, west_east, []
-        else:
-            print("Error found in left-right score matrix!", file= sys.stderr)
-            quit()
-    else:
-        print("Error found in top-down score matrix!", file= sys.stderr)
-        quit()
+    return north_south, west_east, diagonal_matrix
+
 
 
 def manhattan(north_south, west_east, diagonal_matrix, args):
     n = len(north_south[0])
+    m = len(west_east)
     if isinstance(north_south[0][0], int):
-        trip = np.zeros((n, n), dtype=np.int)
+        trip = np.zeros((m, n), dtype=np.int)
     else:
-        trip = np.zeros((n, n), dtype=np.float)
+        trip = np.zeros((m, n), dtype=np.float)
     
     #initialise first row and first column
     #first row
@@ -115,7 +92,7 @@ def manhattan(north_south, west_east, diagonal_matrix, args):
             down = trip[i-1, j] + north_south[i-1][j]
             right = trip[i, j-1] + west_east[i][j-1]
             trip[i, j] = max(down, right)
-    
+       
     return trip
 
 def route(trip, with_diag, north_south, west_east, diagonal_matrix, i, j, path=""):
