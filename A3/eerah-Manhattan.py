@@ -15,7 +15,6 @@ def exit_abnormal():
 
 
 class manhattan:
-
     def __init__(self, inputfile=[], diagonal=False, south_matrix=[], east_matrix=[], diag_matrix=[], path=[], trace=False):
         self.south_matrix = south_matrix  # contains the nort-south data
         self.east_matrix = east_matrix  # contains  the west-east data
@@ -28,9 +27,10 @@ class manhattan:
 
     def print(self):
         print(self.res_dict)
+        #print(self.diagonal)
 
     def print_result(self):
-        print(self.res_dict[(len(self.south_matrix), len(self.east_matrix[0]))][0])
+        print(round(self.res_dict[(len(self.south_matrix), len(self.east_matrix[0]))][0], ndigits=5))
         #path is stored reverse
         if self.path and self.trace:
             print("".join(self.path[::-1]))
@@ -83,22 +83,28 @@ class manhattan:
         for i in range(0, m):
             self.res_dict[(0, i + 1)] = [self.res_dict[(0, i)][0] + self.east_matrix[0][i], "E"]
 
-        for i in range(1, n + 1):
-            for j in range(1, m + 1):
-                south=self.res_dict[(i - 1, j)][0] + self.south_matrix[i - 1][j]
-                east=self.res_dict[(i, j - 1)][0] + self.east_matrix[i][j - 1]
-
-                if self.diagonal:
+        if self.diagonal:
+            for i in range(1, n + 1):
+                for j in range(1, m + 1):
+                    south=self.res_dict[(i - 1, j)][0] + self.south_matrix[i - 1][j]
+                    east=self.res_dict[(i, j - 1)][0] + self.east_matrix[i][j - 1]
                     diag=self.res_dict[(i - 1, j - 1)][0] + self.diag_matrix[i - 1][j - 1]
-                else:
-                    diag=-1
+                    if south >= east and south >= diag:
+                        self.res_dict[(i, j)]=[south, "S"]
+                    elif east >= diag:
+                        self.res_dict[(i, j)]=[east, "E"]
+                    else:
+                        self.res_dict[(i, j)]=[diag, "D"]
+        else:
+            for i in range(1, n + 1):
+                for j in range(1, m + 1):
+                    south=self.res_dict[(i - 1, j)][0] + self.south_matrix[i - 1][j]
+                    east=self.res_dict[(i, j - 1)][0] + self.east_matrix[i][j - 1]
+                    if south >= east:
+                        self.res_dict[(i, j)]=[south, "S"]
+                    else:
+                        self.res_dict[(i, j)]=[east, "E"]
 
-                if south >= east and south >= diag:
-                    self.res_dict[(i, j)]=[south, "S"]
-                elif east >= diag:
-                    self.res_dict[(i, j)]=[east, "E"]
-                else:
-                    self.res_dict[(i, j)]=[diag, "D"]
 
     def backtracking(self):
         i=len(self.south_matrix)
