@@ -10,6 +10,7 @@ import argparse
 import random
 
 class RollingDice:
+    #initialise class variables
     def __init__(self, file, verbose):
         self.file = file
         self.seq = ""
@@ -27,6 +28,7 @@ class RollingDice:
         self.seq = seq
         self.length = len(seq)
     
+    #determine the nucleotide composition of the sequence
     def composition(self):
         for i in self.seq:
             if i not in self.freq_dict:
@@ -44,6 +46,7 @@ class RollingDice:
         for k in sorted(self.freq_dict):
             self.probs.append(self.freq_dict[k])
     
+    #generate random sequences, using the frequences from the original sequence
     def rand_seq(self):
         chars = random.choices(self.chars, weights=self.probs, k = self.length)
         chars = "".join(chars)
