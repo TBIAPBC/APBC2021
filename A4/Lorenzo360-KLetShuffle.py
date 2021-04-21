@@ -44,10 +44,7 @@ class KLetShuffle:
         for i in range(0,len(sequence)-self.k+1):
             kLet="".join(list(sequence)[i:i+self.k])
             if kLet.isalpha():
-                if kLet in letter_frequencies:
-                    letter_frequencies[kLet]=letter_frequencies[kLet]+1
-                else:
-                    letter_frequencies[kLet]=1
+                self.add_edge(letter_frequencies,kLet)
         return letter_frequencies
 
     def print_k_let_frequencies(self, absolute=False):
@@ -171,7 +168,8 @@ class KLetShuffle:
             letters=[vertex[0] for vertex in vertexPath if vertex[0] is not self.specialVertex]
             return "".join(letters)
         else:
-            return "".join(vertexPath)
+            letters = [vertex[0] for vertex in vertexPath[0:-1]] + [vertexPath[-1]]
+            return "".join(letters)
 
     def join_paths(self,path1, path2):
         if path1[-1]==path2[0]:
