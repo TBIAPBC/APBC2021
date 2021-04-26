@@ -20,8 +20,10 @@ class MonoShuffle:
         
     def open_file(self, file):
         with open(file, "r") as fh_file:
-            seq = fh_file.read()
-            seq = seq.rstrip()
+            seq = ""
+            for line in fh_file.readlines():
+                line = line.rstrip()
+                seq += line
         self.seq = seq
         self.length = len(seq)
         if self.verbose:
