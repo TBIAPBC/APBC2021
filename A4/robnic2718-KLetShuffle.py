@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1059]:
+
+
 # coding: utf-8
 
 import sys
@@ -17,13 +23,6 @@ def read_input(filename):
         print("Input file required. Please provide or check filename.")
         sys.exit(0)
 
-# Check sequence validity
-def check_warn(base):
-    if base not in ['A','G','T','C','U']:
-        print("Invalid base encountered. Program stopped!")
-        print("Error -->", str(pos+1) + ". position in sequence")
-        sys.exit(0)
-
 # Data structure for storing multigraph info
 class Vertex:
     def __init__(self, sym, neighbors=[], seen=False, next_=None):
@@ -31,15 +30,18 @@ class Vertex:
         self.neighbors = neighbors
         self.seen = seen
         self.next_ = next_
+        self.number_in_sequ = 1
 
 ######
 class KLetShuffle:
     # Initialize instance with existing multigraph or create it
-    def __init__(self, sequence, k):
+    def __init__(self, sequence, k, print_frequencies):
+        self.klet_size = k
+        self.print_stats = print_frequencies
         self.sequence = sequence
         self.multigraph = self.build_graph(k-1)
-        self.multigraph_copy = deepcopy(self.multigraph)
-    
+        self.multigraph_copy = deepcopy(self.multigraph)  
+
     # Generate all k_lets for sequence
     def k_lets(self, sequence, km1):
         if km1 < 1:
@@ -53,11 +55,9 @@ class KLetShuffle:
                 base = next(sequence)
             except:
                 return
-            check_warn(base)
             km1Let.append(base)
         # Yield all k_lets
         for b in sequence:
-            check_warn(b)
             km1Let.append(b)
             yield "".join(km1Let)
             del km1Let[0]
@@ -73,12 +73,38 @@ class KLetShuffle:
                 sequ2id[km1_let] = id_
                 multigraph[id_] = deepcopy(Vertex(km1_let))
                 id_ += 1
+            # Count number of times the k_let is present in the sequence
+            # in order to determine the k_let frequency
+            else:
+                multigraph[sequ2id[km1_let]].number_in_sequ += 1
         # Add edges
-        for pos in range(len(self.sequence)-2*km1+1):
+        for pos in range(len(self.sequence)-km1):
             left_kletID = sequ2id[self.sequence[pos:pos+km1]]
-            right_kletID = sequ2id[self.sequence[pos+km1:pos+km1*2]]
+            right_kletID = sequ2id[self.sequence[pos+1:pos+km1+1]]
             multigraph[left_kletID].neighbors.append(right_kletID)
+        if(self.print_stats):
+            self.klet_frequency()
         return multigraph
+    
+    # Print k_let frequencies with klet_sequence
+    def klet_frequency(self, sequence=None, k=None):
+        if k == None:
+            k = self.klet_size
+        if sequence == None:
+            sequence = self.sequence
+        count_dict = {}
+        for km1_let in self.k_lets(sequence, k):
+            if km1_let not in count_dict:
+                count_dict[km1_let] = 1
+                continue
+            count_dict[km1_let] += 1
+        total_num_klets = sum(count_dict.values())
+        frequency_list = []
+        for klet in count_dict:
+        	  frequency_list.append((klet, round(count_dict[klet]/total_num_klets*100,2)))
+        frequency_list.sort()
+        for klet in frequency_list:
+            print(klet[0]," : ",klet[1])
     
     # Create and store random spanning tree in Vertex.next
     # according to WILSON's algorithm
@@ -114,35 +140,62 @@ class KLetShuffle:
         curr_node = 0
         base_IDs = [0]
         # Run through nodes and neighbour lists
-        while(self.multigraph[curr_node].neighbors != []):
-            base_IDs.append(self.multigraph[curr_node].neighbors[0])
-            del self.multigraph[curr_node].neighbors[0]
-            curr_node = base_IDs[-1]
+        stop_length = len(self.sequence)-self.klet_size+2
+        next_one = False
+        # The outer while-loop ensures that in case the wilson's algorithm
+        # generates by chance (chance is low) a not connected spanning tree
+        # then the neighbors are shuffled again to obtain a connected spanning tree
+        while(len(base_IDs) != stop_length):
+            if next_one:
+                self.multigraph = deepcopy(self.multigraph_copy)
+                self.random_spanning_tree()
+                self.shuffle_neighbors()
+                base_IDs = [0]
+                curr_node = 0
+            while(self.multigraph[curr_node].neighbors != []):
+                base_IDs.append(self.multigraph[curr_node].neighbors[0])
+                del self.multigraph[curr_node].neighbors[0]
+                curr_node = base_IDs[-1]
+            next_one = True
         # Turn base_IDs into bases
-        new_sequence = ""
-        for i in base_IDs[::-1]:
-            new_sequence += self.multigraph[i].sym
-        return "".join(new_sequence)
+        new_sequence = self.multigraph[base_IDs[0]].sym
+        first = True
+        for i in base_IDs:
+            if first:
+                first=False
+                continue
+            new_sequence += self.multigraph[i].sym[-1]
+        if(self.print_stats):
+        	  print("\n")
+        	  self.klet_frequency()
+        self.multigraph = deepcopy(self.multigraph_copy)
+        return "".join(new_sequence[::-1])
     
     # Produce steps required to obtain sequence for new uniform/random spanning tree
-    def result(self):
-        self.random_spanning_tree()
-        self.shuffle_neighbors()
-        print(self.get_sequence())
+    def result(self, N):
+        for i in range(N):
+            self.random_spanning_tree()
+            self.shuffle_neighbors()
+            print(self.get_sequence())
 ######
+
+
+# In[1060]:
+
 
 def start(args):
     """Run program"""
-    for i in range(args.N):
-        klet_instance = KLetShuffle(read_input(args.filename),args.k)
-        klet_instance.result()
-
+    klet_instance = KLetShuffle(read_input(args.filename),args.k,args.stats)
+    klet_instance.result(args.N)
+    
 
 if __name__ == "__main__":
     cmdl_parser=ap.ArgumentParser(description="Generate N random base-sequences and approx. preserve frequencies.")
     cmdl_parser.add_argument("filename", help="Specify name of input file.")
     cmdl_parser.add_argument("-k", required=True, type=int, help="Specify size of k-let.")
     cmdl_parser.add_argument("-N", required=True, type=int, help="Specify number of sequences to generate.")
+    cmdl_parser.add_argument("--stats", action="store_true", help="Print klet frequency of original and newly generated sequences.")
     
     start(cmdl_parser.parse_args())
     sys.exit(0)
+
