@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1059]:
-
-
 # coding: utf-8
 
 import sys
@@ -144,7 +138,7 @@ class KLetShuffle:
         next_one = False
         # The outer while-loop ensures that in case the wilson's algorithm
         # generates by chance (chance is low) a not connected spanning tree
-        # then the neighbors are shuffled again to obtain a connected spanning tree
+        # then the random spanning tree is generated again to obtain a connected one
         while(len(base_IDs) != stop_length):
             if next_one:
                 self.multigraph = deepcopy(self.multigraph_copy)
@@ -179,10 +173,6 @@ class KLetShuffle:
             print(self.get_sequence())
 ######
 
-
-# In[1060]:
-
-
 def start(args):
     """Run program"""
     klet_instance = KLetShuffle(read_input(args.filename),args.k,args.stats)
@@ -198,4 +188,3 @@ if __name__ == "__main__":
     
     start(cmdl_parser.parse_args())
     sys.exit(0)
-
