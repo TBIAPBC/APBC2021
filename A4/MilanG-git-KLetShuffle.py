@@ -31,7 +31,7 @@ class KLetShuffle:
         self.ifirstk = self.uniquek.index(self.firstk)
         self.graph()
         self.arbo()
-
+        
     
     def open_file(self, file):
         with open(file, "r") as fh_file:
@@ -41,8 +41,10 @@ class KLetShuffle:
                 seq += line
         self.seq = seq
         self.length = len(seq)
+        if self.klength > self.length:
+            print("Error: K-let length greater than sequence length.", file=sys.stderr)
+            sys.exit(1)
         
-    
     #generate all k-1-lets
     def kletsm1(self):
         for i in range(self.length-self.klength+2):
@@ -52,7 +54,7 @@ class KLetShuffle:
         self.firstk = self.km1lets[0]
         self.lastk = self.km1lets[-1]
        
-    #build the directed graph stored as an adjacency matrix
+    #build the directed graph
     def graph(self):
         for u in self.uniquek:
             neighbours = [self.uniquek.index(self.km1lets[x+1]) for x, y in enumerate(self.km1lets) if y == u if x < len(self.km1lets)-1]
@@ -63,36 +65,23 @@ class KLetShuffle:
                 tab = [u, self.uniquek.index(u), neighbours, 0, "udef"]
             self.mgraph.append(tab)
     
-    #create random spanning trees
-    #works currently just with -k 2, but not with longer k-lets
+    #using Wilson's algorithm create random spanning trees
     def arbo(self):
-        def tree(self, start, u, path):
-            candidates = [a for a in u[2] if a != self.ilastk if a not in path]
-            if len(path) == len(self.mgraph)-1 and self.ilastk in u[2]:
-                path += [self.ilastk]
-                self.spanning.append(path)
-                return
+        for i in range(len(self.mgraph)):
+            u = i
             
-            if candidates != []:
-                next_u = random.choice(candidates)
-                path.append(next_u)
-                tree(self, start, self.mgraph[next_u], path)
-            else:
-                return False
-
-        for t in self.mgraph:
-            if t[4] != "T":
-                tree(self, t, t, [t[1]])
-    
+            while self.mgraph[u][3] == 0:
+                self.mgraph[u][4] = random.choice(self.mgraph[u][2])
+                u = self.mgraph[u][4]
+            
+            u = i
+            
+            while self.mgraph[u][3] == 0:
+                self.mgraph[u][3] = 1
+                u = self.mgraph[u][4]
+        
     def path(self):
         shuffle_graph = copy.deepcopy(self.mgraph)
-        rand_tree = random.choice(self.spanning)
-        for k in range(len(rand_tree)):
-            if shuffle_graph[rand_tree[k]][4] == "T":
-                shuffle_graph[rand_tree[k]][3] = 1
-            else:
-                shuffle_graph[rand_tree[k]][3] = 1
-                shuffle_graph[rand_tree[k]][4] = rand_tree[k+1]
         
         for tab in shuffle_graph:
             if tab[4] != "T":
@@ -105,11 +94,9 @@ class KLetShuffle:
             
         if self.verbose:
             print("#Graph structure after randomly selected spanning tree")
-            print("symb\tid\tout_id\tseen\tnext")
+            print("symb\tid\tseen\tnext\tout_id")
             for t in shuffle_graph:
-                for ti in t:
-                    print(ti, end="\t")
-                print("")
+                print(f"{t[0]}\t{t[1]}\t{t[3]}\t{t[4]}\t{t[2]}")
         
         rand_seq = []
         v = self.ifirstk
@@ -118,10 +105,10 @@ class KLetShuffle:
             if len(shuffle_graph[v][2]) > 0:
                 next_v = shuffle_graph[v][2].pop(0)
                 v = next_v
-        
-        new_seq = ""
-        for w in rand_seq:
-            new_seq += shuffle_graph[w][0]
+
+        new_seq = shuffle_graph[self.ifirstk][0]
+        for w in range(len(rand_seq)-(self.klength-1)):
+            new_seq += shuffle_graph[rand_seq[w]][0][-1]
         
         if self.verbose:
             print("#Old Sequence")
@@ -141,18 +128,14 @@ class KLetShuffle:
         print("#First k-1-let:", self.firstk)
         print("#Last k-1-let:", self.lastk)
         print("#Graph structure")
-        print("symb\tid\tout_id\tseen\tnext")
+        print("symb\tid\tseen\tnext\tout_id")
         for t in self.mgraph:
-            for ti in t:
-                print(ti, end="\t")
-            print("")
-        print("#Spanning Tree(s)")
-        print(self.spanning)
+            print(f"{t[0]}\t{t[1]}\t{t[3]}\t{t[4]}\t{t[2]}")
         
 def main(args):
     if args.k < 2:
         print("Error: K-let length below minimum of 2!", file=sys.stderr)
-        quit()
+        sys.exit(1)
     
     KLS = KLetShuffle(args.filename, args.k, args.verbose)
     
@@ -169,4 +152,4 @@ if __name__ == "__main__":
     parser.add_argument("-k", type=int, default=2, help="Length of k-lets. Default=2")
     parser.add_argument("--verbose", action="store_true", help="Print verbose output")
     main(parser.parse_args())
-    sys.exit()
+    sys.exit(0)
