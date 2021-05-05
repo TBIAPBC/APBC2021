@@ -64,10 +64,16 @@ class KLetShuffle:
             else:
                 tab = [u, self.uniquek.index(u), neighbours, 0, "udef"]
             self.mgraph.append(tab)
-    
+        
+        if self.verbose:
+            print("#Graph structure after randomly selected spanning tree")
+            print("symb\tid\tseen\tnext\tout_id")
+            for t in self.mgraph:
+                print(f"{t[0]}\t{t[1]}\t{t[3]}\t{t[4]}\t{t[2]}")
+        
     #using Wilson's algorithm create random spanning trees
     def arbo(self):
-        for i in range(len(self.mgraph)):
+        for i in range(len(self.mgraph)-1):
             u = i
             
             while self.mgraph[u][3] == 0:
@@ -79,8 +85,23 @@ class KLetShuffle:
             while self.mgraph[u][3] == 0:
                 self.mgraph[u][3] = 1
                 u = self.mgraph[u][4]
-        
+    
+    def check_graph(self):
+        c = 0
+        while c != len(self.mgraph):
+            c = 0
+            for n in self.mgraph:
+                if n[3] == 1:
+                    c += 1
+            if c != len(self.mgraph):
+                for m in self.mgraph:
+                    if m[4] != "T":
+                        m[3] = 0
+                self.arbo()
+    
     def path(self):
+        self.check_graph()
+        
         shuffle_graph = copy.deepcopy(self.mgraph)
         
         for tab in shuffle_graph:
