@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
    name='Lino_Boehler_A5',
@@ -7,8 +7,8 @@ setup(
    author_email='lino.boehler@gmx.net',
    #packages=["A0","A1","A2","A3","A4"],
    #scripts=['bin/script1','bin/script2'],
-   #url='http://pypi.python.org/pypi/PackageName/',
    license="MIT-License",
+	 packages=find_packages(),
    description='First Package include all Exercises so far',
    long_description=open('README.txt').read(),
    install_requires=[

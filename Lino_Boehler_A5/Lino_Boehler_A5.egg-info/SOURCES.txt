@@ -1,0 +1,15 @@
+README.txt
+setup.py
+Lino_Boehler_A5.egg-info/PKG-INFO
+Lino_Boehler_A5.egg-info/SOURCES.txt
+Lino_Boehler_A5.egg-info/dependency_links.txt
+Lino_Boehler_A5.egg-info/requires.txt
+Lino_Boehler_A5.egg-info/top_level.txt
+modules/A0.py
+modules/A1.py
+modules/A2.py
+modules/A3.py
+modules/__init__.py
+modules/dice.py
+modules/k_let.py
+modules/mono.py

@@ -1,0 +1,17 @@
+Metadata-Version: 1.0
+Name: Lino-Boehler-A5
+Version: 0.1.0
+Summary: First Package include all Exercises so far
+Home-page: UNKNOWN
+Author: Lino Boehler
+Author-email: lino.boehler@gmx.net
+License: MIT-License
+Description: This Package contains all exercise programms to be usd as modules:
+        A0:
+        A1:
+        A2:
+        A3:
+        A4:
+        
+        
+Platform: UNKNOWN
