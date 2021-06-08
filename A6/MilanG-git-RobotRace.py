@@ -30,7 +30,7 @@ class SemiRandBot(Player):
     def move(self, status):
         
         self.map_update(status)
-        print(self.mymap)
+        
         coor = (status.x, status.y)
         # get distance to nearest pot of gold
         diff = (math.inf, math.inf)
