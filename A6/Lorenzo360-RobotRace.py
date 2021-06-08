@@ -55,7 +55,7 @@ class greedy(Player):
                         foundNewDir=True
                         curPos=NextPosCandidate
                         break
-            if not foundNewDir or NextPosCandidate == next(iter(status.goldPots)):
+            if not foundNewDir or curPos == next(iter(status.goldPots)):
                 break
         #print(directions)
         #print("SUM:"+str(np.sum(self.visited)))
@@ -66,7 +66,7 @@ class greedy(Player):
     def distance2gold(self,status,curPos):
         goldPos = next(iter(status.goldPots))
         goldVector = (goldPos[0] - curPos[0], goldPos[1] - curPos[1])
-        return goldVector[0]+goldVector[1]
+        return abs(goldVector[0])+abs(goldVector[1])
 
     def get_greedy_direction(self,status,curPos):
         goldPos = next(iter(status.goldPots))
