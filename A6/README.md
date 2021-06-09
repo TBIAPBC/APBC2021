@@ -14,6 +14,11 @@ ideas and even share code via Github and/or offline. The more actively
 you contribute and discuss details of the game the more fun this will
 be :).
 
+# eerah-RobotRace.py
+
+Uses the shortest path algorithm and takes maximal 4 steps at a time. 
+Its name is the class "basic".
+
 
 ## Rules
 
