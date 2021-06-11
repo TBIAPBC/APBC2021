@@ -19,6 +19,16 @@ be :).
 Uses the shortest path algorithm and takes maximal 4 steps at a time. 
 Its name is the class "basic".
 
+## Mines
+
+Mines are set when:
+*** Gold is within range < 12
+*** Another player is within range < 4
+
+## other stuff
+
+Robot will not crash into other players anymore. 
+
 
 ## Rules
 
