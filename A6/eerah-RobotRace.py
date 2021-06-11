@@ -118,7 +118,7 @@ class basic(Player):
 			obj_pos = self.get_position_obj(status=status)
 			gLoc = next(iter(status.goldPots))
 			ourMap = self.update_map(status=status)
-			G = self._create_graph(ourMap=ourMap)
+			G = self._create_graph(ourMap=ourMap, pos_other=obj_pos)
 			bestpath_target_gold = nx.shortest_path(G, source=obj_pos, target=gLoc, weight="weight")
 			bestpath_target_gold.pop(0)
 			if bestpath_target_gold:
