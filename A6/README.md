@@ -21,9 +21,11 @@ Its name is the class "basic".
 
 ## Mines
 
-Mines are set when:
-*** Gold is within range < 12
-*** Another player is within range < 4
+Mines are set when: <br>
+ 
+ * Gold is within range < 12 <br>
+ * Another player is within range < 4
+ * strategie is to set mines between gold and another player
 
 ## other stuff
 
