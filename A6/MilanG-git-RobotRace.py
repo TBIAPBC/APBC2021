@@ -113,7 +113,7 @@ class SemiRandBot(Player):
 class FW_Bot(Player):
     #TODO: fix storing in tempfile, add setting of mines
     def reset(self, player_id, max_players, width, height):
-        self.player_name = "Gnuim"
+        self.player_name = "Gnium"
         self.tmap = Map(width, height)
         self.moves = [D.up, D.left, D.down, D.right, D.up, D.up_left, D.down_left, D.down_right, D.up_right]
         self.directions = [( 0,  1), ( 0, -1), (-1,  0), ( 1,  0), (-1,  1), ( 1,  1), (-1, -1), ( 1, -1)]
