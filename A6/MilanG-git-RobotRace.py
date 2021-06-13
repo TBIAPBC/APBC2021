@@ -5,6 +5,8 @@
 """
 import math
 import random
+import networkx as nx
+import tempfile
 
 from game_utils import nameFromPlayerId
 from game_utils import Direction as D, MoveStatus
@@ -95,16 +97,128 @@ class SemiRandBot(Player):
                 if len(cand) == 0:
                     cand = options
                 
-                rand_dir = random.choice(cand)
-                visited.append(coor)
-                coor = rand_dir[1]
-                direct = rand_dir[0].as_xy()
-                diff = (diff[0] - direct[0], diff[1] - direct[1])
-                moves.append(rand_dir[0])
+                if cand != []:
+                    rand_dir = random.choice(cand)
+                    visited.append(coor)
+                    coor = rand_dir[1]
+                    direct = rand_dir[0].as_xy()
+                    diff = (diff[0] - direct[0], diff[1] - direct[1])
+                    moves.append(rand_dir[0])
                 
         return moves
             
     #def set_mines(self, status):
         #pass
+        
+class FW_Bot(Player):
+    #TODO: fix storing in tempfile, add setting of mines
+    def reset(self, player_id, max_players, width, height):
+        self.player_name = "Gnuim"
+        self.tmap = Map(width, height)
+        self.moves = [D.up, D.left, D.down, D.right, D.up, D.up_left, D.down_left, D.down_right, D.up_right]
+        self.directions = [( 0,  1), ( 0, -1), (-1,  0), ( 1,  0), (-1,  1), ( 1,  1), (-1, -1), ( 1, -1)]
+        self.graph = nx.DiGraph()
+        self.storage = tempfile.NamedTemporaryFile()
+        self.temp = self.storage.name
+        self.maxmoves = 5
+        self.vis_tiles = []
+        self.vis_dir = {}
+    
+    def round_begin(self, r):
+        pass
+    
+    def move(self, status):
+        gLoc = next(iter(status.goldPots))
+        
+        currPos = (status.x, status.y)
+        
+        #read, update and save graph
+        '''
+        Storing and/or Reading out Edge list in temp file doesn't work right
+        '''
+        #self.read_mem()
+        self.map_update(status)
+        #self.write_mem()
+        
+        
+        #determine the shortest path
+        moves = []
+        path = []
+        pred, dist = nx.floyd_warshall_predecessor_and_distance(self.graph)
+        
+        #gold location is in graph and has neigbours, i.e. was/is visible
+        if nx.has_path(self.graph, currPos, gLoc):
+            path = nx.reconstruct_path(currPos, gLoc, pred)
+            
+        #else get closer to gold pot using pythagoras as distance measure
+        else:
+            #find closest point in visibility range, that is accessible 
+            self.distance(gLoc)
+            for node, dist in sorted(self.vis_dir.items(), key = lambda x:x[1]):
+                if nx.has_path(self.graph, currPos, node):
+                    path = nx.reconstruct_path(currPos, node, pred)
+                if path != []:
+                    break
+        
+        rad = min(len(path)-1, self.maxmoves)
+        for i in range(rad):
+            if status.map[path[i+1][0], path[i+1][1]].status == TileStatus.Empty:
+                direction = self._as_direction(path[i], path[i+1])
+                moves.append(direction)
+            else:
+                break
+            
+        return moves
+    
+    def set_mines(self, status):
+        pass
+    
+    def distance(self, gLoc):
+        for tile in self.vis_tiles:
+            dist = math.sqrt((gLoc[0] - tile[0])**2 + (gLoc[1] - tile[1])**2)
+            self.vis_dir[tile] = dist
+    
+    def _as_direction(self,curpos,nextpos):
+        for d in D:
+            di = d.as_xy()
+            if (curpos[0] + di[0], curpos[1] + di[1]) ==  nextpos:
+                return d
+        return None
 
-players = [SemiRandBot()]
+    def map_update(self, status):
+        vis = status.params.visibility
+        for x in range(self.tmap.width):
+            for y in range(self.tmap.height):
+                if status.map[x, y].status != TileStatus.Unknown:
+                    self.tmap[x, y].status = status.map[x, y].status
+                    
+                    if status.map[x, y].status == TileStatus.Empty:
+                        #get the tiles that are at the edge of visibility
+                        if (x == status.x + vis) or (x == status.x - vis) or (y == status.y + vis) or (y == status.y - vis):
+                            self.vis_tiles.append((x, y))
+                            
+                        self.graph.add_node((x, y))
+                        for dir in self.directions:
+                            nx = x + dir[0]
+                            ny = y + dir[1]
+                            if (nx >= 0 and nx < self.tmap.width) and (ny >= 0 and ny < self.tmap.height):
+                                if status.map[nx, ny].status == TileStatus.Empty:
+                                    self.graph.add_edge((x, y), (nx, ny))
+
+    
+    def write_mem(self):
+        with open(self.temp, "w") as temp:     
+            for line in nx.generate_edgelist(self.graph, data=False, delimiter=";"):
+                l = line + "\n"
+                temp.write(l)
+    
+    def read_mem(self):
+        with open(self.temp, "r") as temp:
+            temp.seek(0)
+            for line in temp.readlines():
+                e = line.rstrip()
+                edge = e.split(";")
+                #print("print read edge:",edge, "split up:",edge[0], edge[1])
+                self.graph.add_edge(tuple(edge[0]), tuple(edge[1]))
+            
+players = [FW_Bot()] #[SemiRandBot(), FW_Bot()]
