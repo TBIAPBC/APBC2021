@@ -46,6 +46,7 @@ class MyPathFindingPlayer(Player):
                                         ourMap[x, y].status = status.map[x, y].status
                 #print("Our Map, after")
                 #print(ourMap)
+                ourMap[x,y].status
 
                 curpos = (status.x,status.y)
 
