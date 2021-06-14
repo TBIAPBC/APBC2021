@@ -20,7 +20,12 @@ args = parser.parse_args()
 
 #robot_module_names = {"beatme":"beatme-RobotRace","Lorenzo360":"Lorenzo360-RobotRace"}
 #robot_module_names = {"Lorenzo360":"Lorenzo360-RobotRace"}
-robot_module_names = {"beatme":"beatme-RobotRace","test":"test-RobotRace","Lorenzo360":"Lorenzo360-RobotRace"}
+#robot_module_names = {"beatme":"beatme-RobotRace","test":"test-RobotRace","Lorenzo360":"Lorenzo360-RobotRace"}
+#robot_module_names = {"Lorenzo360_2":"Lorenzo360-RobotRace2","Lorenzo360":"Lorenzo360-RobotRace"}
+#robot_module_names = {"Beicht":"Beicht-Robot","Lorenzo360":"Lorenzo360-RobotRace"}
+robot_module_names = {"beatme":"beatme-RobotRace","Lorenzo360_1":"Lorenzo360-RobotRace","Lorenzo360_3":"Lorenzo360-RobotRace3"}
+
+
 robotmodules = { m:__import__(m) for m in robot_module_names.values() }
 
 if args.map is not None:
