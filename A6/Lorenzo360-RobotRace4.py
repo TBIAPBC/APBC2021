@@ -25,7 +25,7 @@ class TeamPlayerA(Player):
         self.numMoves = 3
         self.memoryFile=tempfile.gettempdir()+'/Lorenzo360-RobotRace-Mem4.npy'
         self.memoryLockFile=tempfile.gettempdir()+'/Lorenzo360-RobotRace-Mem4.lock'
-        #Contains information about other TeamPlayers gold
+        #Contains information about other TeamPlayers distance to the gold pot 
         self.golddict={}
         # Write Access must be mutually exclusive
         with FileLock(self.memoryLockFile):
