@@ -99,13 +99,15 @@ class rob(Player):
             
             
             path=self.find_path(status)
-            
+            print(path)
             # select the first maxMoves = curentspeed, tile sfrom the list
             path=path[0:self.maxMoves+1]
+            print(path)
             
             moves=self.path_to_movment(status,path)
-                
+            print(moves)
             if self.distance(my_pos,gpos) > (status.goldPotRemainingRounds*self.maxMoves):
+    
                 return []
 
             return moves
@@ -115,6 +117,8 @@ class rob(Player):
             return dist
 
         def path_to_movment(self,status,path):
+            if len(path) == 0:
+                return (0,0)
             moves = []
             #get the direction and convert them with help of the dict to direction strings 
             for i in range(len(path)-1):
@@ -123,7 +127,7 @@ class rob(Player):
                 y=path[i+1][1]-path[i][1]
                 
                 moves.append(self.move_dict[(x,y)])
-                return moves
+            return moves
             
         def find_gold(self,status):
             assert len(status.goldPots) > 0
