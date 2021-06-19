@@ -1,22 +1,94 @@
-from game_utils import Directions as D
-from queue import PriorityQueue
+import pickle
+from random import random
+from copy import deepcopy
+from game_utils import Direction as D
 
 
 
-class PQueue(PriorityQueue):
-    """Add functionality to PriorityQueue"""
+
+def load_map_memory():
+    with open("robnics_memory.pickle", "rb") as memory_file:
+        return pickle.load(memory_file)
+
+
+
+# Compute total cost for given number of moves
+def move_costs(n):
+    return (n*n + n)/2
+
+
+
+class MapMemory(object):
+    def __init__(self, width, height):
+        # Initialize map full of yet unknown tiles
+        self.map = dict()
+        for x in range(width):
+            for y in range(height):
+                self.map[(x,y)] = '_'
+        self.width = width # x
+        self.height = height # y
+    
+    def __getitem__(self, coor):
+        if len(coor) != 2:
+            raise IndexError("Coordinates must be a 2-sized tuple.")
+        return self.map[coor]
+    
+    def __setitem__(self, coor, obj):
+        if len(coor) != 2:
+            raise IndexError("Coordinates must be a 2-sized tuple.")
+        self.map[coor] = obj
+        
+    def local_save(self):
+        with open("robnics_memory.pickle", "wb") as memory_file:
+            pickle.dump(self, memory_file)
+            
+    def __str__(self):
+        rows = []
+        for y in range(self.height):
+            row = ""
+            for x in range(self.width):
+                row += self.map[(x,y)] + " "
+            rows.append(row)
+        
+        map_string = ""
+        for r in rows[::-1]:
+            map_string += r + '\n'
+
+        return map_string 
+
+
+
+class PQueue(object):
+    """PriorityQueue"""
+    def __init__(self):
+        self.queue = []
+        
+    def empty(self):
+        if self.queue == []:
+            return True
+        return False
+    
+    def _get(self):
+        if self.empty():
+            return []
+        self.queue.sort(key=lambda x:x[0], reverse=True)
+        return self.queue.pop()
+    
+    def _put(self, cost_node_tuple):
+        self.queue.append(cost_node_tuple)
+        
     def __contains__(self, coor):
-        if not self.queue.empty():
+        if not self.empty():
             for node in [n for p,n in self.queue]:
                 if node.coor == coor:
                     return True
         return False
     
     def get_node(self, other_node):
-        for node in [n for p,n in self.queue]:
+        for idx, node in enumerate([n for p,n in self.queue]):
             if node == other_node:
-                return node
-        return None
+                return node, idx
+        return None, None
 
 
 
@@ -41,22 +113,24 @@ class Node(object):
 
 class Astar(object):
     """Shortest path algorithm"""
-    def __init__(self, _map, start, goal):
+    def __init__(self, _map, start, goal, dir_costs=tuple([1 for _ in range(8)])):
         self.start = Node(coor=start)
-        self.goal = Node(coor=end)
-        self.open_queue = PQueue()
-        self.closed_nodes = dict()
+        self.goal = Node(coor=goal)
+        # cost of walking into specific direction -> default=1
+        self.dir_costs = dir_costs
+        self.different_dir_costs = False if (dir_costs == tuple([1 for _ in range(8)])) else True
         self._map = _map
         self.directions = [D.up, D.down, D.left, D.right, 
                            D.up_left, D.up_right, D.down_left, D.down_right]
         self.coor_dirs = [d.as_xy() for d in self.directions]
+        self.optimal_path = None
     
     def approx_distance(self, coor):
         dx, dy = [abs(x1-x2) for x1,x2 in zip(coor, self.goal.coor)]
         return dx + dy - min(dx, dy)
     
-    def set_costs(self, _node):
-        _node.g = _node.parent.g + 1
+    def set_costs(self, _node, dir_idx):
+        _node.g = _node.parent.g + self.dir_costs[dir_idx]
         _node.h = self.approx_distance(_node.coor)
         _node.f = _node.g + _node.h
         
@@ -77,36 +151,98 @@ class Astar(object):
             if next_node == self.start:
                 break
         
-        return shortest_path
+        return shortest_path[::-1]
+    
+    def possible_directions(self, coor):
+        # Corners of the map
+        if coor[0] == 0 and coor[1] == 0:
+            return [D.up, D.up_right, D.right]
+        if coor[0] == 0 and coor[1] == self._map.height-1:
+            return [D.right, D.down_right, D.down]
+        if coor[0] == self._map.width-1 and coor[1] == 0:
+            return [D.up, D.left, D.up_left]
+        if coor[0] == self._map.height-1 and coor[1] == self._map.width-1:
+            return [D.down, D.down_left, D.left]
+        
+        help_list = []
+        # Sides of the map
+        if coor[0] == 0:
+            help_list = [D.left, D.up_left, D.down_left]
+        if coor[0] == self._map.width-1:
+            help_list = [D.right, D.up_right, D.down_right]
+        if coor[1] == 0:
+            help_list = [D.down, D.down_left, D.down_right]
+        if coor[1] == self._map.height-1:
+            help_list = [D.up, D.up_left, D.up_right]
+            
+        return [d for d in self.directions if d not in help_list]
+    
+    def get_optimal_path(self):
+        return self.optimal_path
             
     def optimize(self):
-        # Add start node to queue
-        self.open_queue._put((self.start.f, self.start))
+        open_queue = PQueue()
+        closed_dict = dict()
         
-        while True:
-            if self.open_queue.empty():
-                return None
-            
+        if self._map[self.start.coor] == '#' or self._map[self.goal.coor] == '#':
+            raise ValueError("Initial/Final position cannot be on a wall \'#\'.")
+            #return []
+        
+        # Add start node to queue
+        open_queue._put((self.start.f, self.start))
+        
+        while not open_queue.empty():
             # Get lowest cost node
-            current_node = self.open_queue._get()
+            current_node = open_queue._get()[1]
             # Mark it as closed
-            self.closed_nodes[current_node.coor] = None
+            closed_dict[current_node.coor] = None
 
             if current_node == self.goal:
-                return self.get_path(current_node)
+                self.optimized_path = self.get_path(current_node)
+                return self.optimized_path
             
-            pos = current_node.position
-            for d in self.directions:
+            pos = current_node.coor
+            for d in self.possible_directions(pos):
                 neighbor_coor = tuple([x+y for x,y in zip(pos, d.as_xy())])
                 
-                if not self.is_walkable(neighbor_coor) or neighbor_coor in self.closed_nodes:
+                if not self.is_walkable(neighbor_coor) or neighbor_coor in closed_dict:
                     continue
                 
-                if not neighbor_coor in self.open_queue:
-                    neighbor_node = Node(current_node, neighbor_coor)
-                    self.set_costs(neighbor_node)
-                    self.open_queue._put((neighbor_node.f, neighbor_node))
+                neighbor_node = Node(current_node, neighbor_coor)
+                # If node not in open list add it to the open list
+                if not neighbor_coor in open_queue:
+                    dir_idx = self.coor_dirs.index(neighbor_node - current_node)
+                    self.set_costs(neighbor_node, dir_idx)
+                    open_queue._put((neighbor_node.f, neighbor_node))
                 else:
-                    #otherpath_node = self.open_queue.get_node(neighbor_node)
-                    pass
+                    # If node in open list, check whether its path is cheaper
+                    same_node, idx_node = open_queue.get_node(neighbor_node)
+                    if same_node.g < neighbor_node.g:
+                        open_queue.queue[idx_node].parent = current_node
+                        dir_idx = self.coor_dirs.index(same_node - current_node)
+                        open_queue.queue[idx_node].g = current_node.g + self.dir_costs[dir_idx]
+                        open_queue.queue[idx_node].f = open_queue.queue[idx_node].g + same_node.h
+        
+        return [] # return empty list if no feasible path to goal exists
 
+
+
+# Intialize instance of map memory
+mem_ = MapMemory(10,10)
+
+# Initialize random objects (wall or free space) on tiles
+for x in range(10):
+    for y in range(10):
+        char = '#' if random() <= 0.01 else '.'
+        mem_[(x,y)] = char
+
+# Show map
+print(mem_)
+
+# Intialize instance of pathfinder
+# Since map is randomly initialized check whether start and goal
+# are not walls '#' otherwise a corresponding error will be raised
+pathfinder = Astar(mem_, start=(2,3), goal=(0,0))
+
+# NB: if no path leads from start to goal then and empty list is returned
+print(pathfinder.optimize())
