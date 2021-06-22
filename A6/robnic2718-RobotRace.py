@@ -74,9 +74,9 @@ class ROBNIC(Player):
         if status.health >= 35:
             if numMoves == len(self.moves_prev_turn[1]):        
                 moves_this_turn = [self.moves_to_make.pop()]
-                if status.gold > 40 and random.random() <= 0.4 and self.moves_to_make != []:
+                if status.gold > 40 and random.random() <= 0.8 and self.moves_to_make != []:
                     moves_this_turn.append(self.moves_to_make.pop())
-                    if status.gold > 60 and random.random() <= 0.3 and len(self.moves_to_make) > 3:
+                    if status.gold > 75 and random.random() <= 0.75 and len(self.moves_to_make) > 3:
                         moves_this_turn.append(self.moves_to_make.pop())
             else:
                 moves_this_turn = self.moves_prev_turn[1][-(len(self.moves_prev_turn[1])-numMoves):]
@@ -103,7 +103,8 @@ class ROBNIC(Player):
         self.moves_to_make = load_moves_to_make()
         self.moves_prev_turn = load_moves_prev_turn()
 
-        self.myMemory.update(status,self.seen_tiles)
+        if len(self.seen_tiles) != self.map_width * self.map_height:
+            self.myMemory.update(status, self.seen_tiles)
         
         myPos = (status.x,status.y)
         if self.moves_to_make == []:
@@ -120,14 +121,14 @@ class ROBNIC(Player):
                 if self.moves_to_make != []:
                     break
         
-        set_mine = True
+        set_mine = False
         myPos = (status.x, status.y)
         for op in status.others:
             if op != None:
                 set_mine = True
                 
         tiles_for_mines = []
-        if set_mine and random.random() <= 0.5 and status.gold >= 50:
+        if set_mine and random.random() <= 0.7 and status.gold >= 50:
             for _d in self.directions:
                 tiles_for_mines.append(self.coor_dir_update(myPos, _d))
         if tiles_for_mines == []:
