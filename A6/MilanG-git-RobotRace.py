@@ -138,23 +138,28 @@ class Pathfinding_Bot(Player):
 
         currPos = (status.x, status.y)
 
-        # read, update and save graph.. currently too slow
-        
+        # read, update and save graph
         self.read_mem()
         self.map_update(status)
         self.write_mem()
+        
         # determine the shortest path
         moves = []
         path = []
         
-        #old algorithm
-        #pred, dist = nx.floyd_warshall_predecessor_and_distance(self.graph)
+        #is a player nearby? --> remove node to treat as wall
+        # TODO: maybe predict path of other player for 1-3 steps?
+        if status.others != []:
+            for p in status.others:
+                if p is not None:
+                    pLoc = (p.x, p.y)
+                    if self.graph.__contains__(pLoc):
+                        self.graph.remove_node(pLoc)
 
         # gold location is in graph and has neigbours, i.e. was/is visible
         if nx.has_path(self.graph, currPos, gLoc):
             path = nx.shortest_path(self.graph, currPos, gLoc, method = "bellman-ford")
-            #old algorithm
-            #nx.reconstruct_path(currPos, gLoc, pred)
+
 
         # else get closer to gold pot using pythagoras as distance measure
         else:
@@ -163,8 +168,6 @@ class Pathfinding_Bot(Player):
             for node, dist in sorted(self.vis_dir.items(), key=lambda x: x[1]):
                 if nx.has_path(self.graph, currPos, node):
                     path = nx.shortest_path(self.graph, currPos, node, method = "bellman-ford")
-                    #old algorithm
-                    #nx.reconstruct_path(currPos, node, pred)
                 if path != []:
                     break
 
