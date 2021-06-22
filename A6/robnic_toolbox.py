@@ -1,15 +1,34 @@
 import pickle
 from random import random
 from copy import deepcopy
+from game_utils import TileStatus
 from game_utils import Direction as D
 
 
+
+def save_moves_to_make(moves):
+    with open("robnic_moves_to_make.pickle", "wb") as moves_file:
+        pickle.dump(moves, moves_file)
+
+
+def load_moves_to_make():
+    with open("robnic_moves_to_make.pickle", "rb") as moves_file:
+        return pickle.load(moves_file)
+
+
+def save_moves_prev_turn(prev_moves):
+    with open("robnic_prev_moves.pickle", "wb") as prev_moves_file:
+        pickle.dump(prev_moves, prev_moves_file)
+
+
+def load_moves_prev_turn():
+    with open("robnic_prev_moves.pickle", "rb") as prev_moves_file:
+        return pickle.load(prev_moves_file)
 
 
 def load_map_memory():
     with open("robnics_memory.pickle", "rb") as memory_file:
         return pickle.load(memory_file)
-
 
 
 # Compute total cost for given number of moves
@@ -27,21 +46,29 @@ class MapMemory(object):
                 self.map[(x,y)] = '_'
         self.width = width # x
         self.height = height # y
+        self.directions = [D.up, D.down, D.left, D.right, 
+                           D.up_left, D.up_right, D.down_left, D.down_right]
     
+
     def __getitem__(self, coor):
         if len(coor) != 2:
             raise IndexError("Coordinates must be a 2-sized tuple.")
         return self.map[coor]
     
+
     def __setitem__(self, coor, obj):
         if len(coor) != 2:
             raise IndexError("Coordinates must be a 2-sized tuple.")
         self.map[coor] = obj
         
+
     def local_save(self):
         with open("robnics_memory.pickle", "wb") as memory_file:
             pickle.dump(self, memory_file)
-            
+    
+
+    # Used for checking functionality
+    # not actually required for the game
     def __str__(self):
         rows = []
         for y in range(self.height):
@@ -53,8 +80,67 @@ class MapMemory(object):
         map_string = ""
         for r in rows[::-1]:
             map_string += r + '\n'
+            
+        return map_string
+    
 
-        return map_string 
+    def coor_dir_update(self, pos, _dir, n):
+        xy = _dir.as_xy()
+        xy = tuple([n*x for x in xy])
+        return tuple([x1+x2 for x1,x2 in zip(pos,xy)])
+    
+
+    def free_tiles(self, myPos):
+        return [item[0] for item in self.map.items() if item[1] == '.' and item[0] != myPos]
+    
+    def is_in_map(self, coor):
+        x, y = coor
+        if x > self.width-1 or x < 0:
+            return False
+        if y > self.height-1 or y < 0:
+            return False
+        return True
+
+    # Update the MapMemory by adding previously unseen tiles
+    def update(self, status, seen_tiles):
+        # Initialize starting position in MapMemory
+        self.map[status.x,status.y] = '.'
+        
+        coors_inSight = []
+        v = status.params.visibility
+        myPos = (status.x, status.y)
+        # Get all tiles' coordinates that are visible
+        for _d in self.directions[:4]:
+            for _n in range(1, v+1):
+                coor_ = self.coor_dir_update(myPos, _d, _n)
+                if self.is_in_map(coor_):
+                    coors_inSight.append(coor_)
+
+        for _d_lr in self.directions[2:4]:
+            for _n in range(1, v+1):
+                pos = self.coor_dir_update(myPos, _d_lr, _n)
+                for _d_ud in self.directions[:2]:
+                    for _n_ in range(1, v+1):
+                        coor_ = self.coor_dir_update(pos, _d_ud, _n_)
+                        if self.is_in_map(coor_):
+                            coors_inSight.append(coor_)
+
+        # Extract coors previously not seen
+        new_coors_inSight = list(set(coors_inSight) - set(seen_tiles))
+        
+        status_free = [TileStatus.Empty, TileStatus.Mine]
+        # Update map
+        for tile_coor in new_coors_inSight:
+            _tileStatus = status.map[tile_coor].status
+            if _tileStatus in status_free:
+                self.map[tile_coor] = '.'
+            if _tileStatus == TileStatus.Wall:
+                self.map[tile_coor] = '#'
+            if _tileStatus == TileStatus.Unknown:
+                raise("The MapMemory cannot be updated with unknown tiles.")
+        
+        # Add seen tiles to list of seen tiles
+        seen_tiles += new_coors_inSight
 
 
 
@@ -63,20 +149,24 @@ class PQueue(object):
     def __init__(self):
         self.queue = []
         
+
     def empty(self):
         if self.queue == []:
             return True
         return False
     
+
     def _get(self):
         if self.empty():
             return []
         self.queue.sort(key=lambda x:x[0], reverse=True)
         return self.queue.pop()
     
+
     def _put(self, cost_node_tuple):
         self.queue.append(cost_node_tuple)
         
+
     def __contains__(self, coor):
         if not self.empty():
             for node in [n for p,n in self.queue]:
@@ -84,6 +174,7 @@ class PQueue(object):
                     return True
         return False
     
+
     def get_node(self, other_node):
         for idx, node in enumerate([n for p,n in self.queue]):
             if node == other_node:
@@ -101,9 +192,11 @@ class Node(object):
         self.g = 0 # cost: start -> current node
         self.h = 0 # heuristic cost: current -> end node
     
+
     def __eq__(self, other_node):
         return self.coor == other_node.coor
     
+
     def __sub__(self, next_node):
         dx = self.coor[0] - next_node.coor[0]
         dy = self.coor[1] - next_node.coor[1]
@@ -125,21 +218,25 @@ class Astar(object):
         self.coor_dirs = [d.as_xy() for d in self.directions]
         self.optimal_path = None
     
+
     def approx_distance(self, coor):
         dx, dy = [abs(x1-x2) for x1,x2 in zip(coor, self.goal.coor)]
         return dx + dy - min(dx, dy)
     
+
     def set_costs(self, _node, dir_idx):
         _node.g = _node.parent.g + self.dir_costs[dir_idx]
         _node.h = self.approx_distance(_node.coor)
         _node.f = _node.g + _node.h
         
+
     def is_walkable(self, coor):
         object_ = self._map[coor[0], coor[1]]
         if object_ == '.':
             return True
         return False
     
+
     def get_path(self, prev_node):
         shortest_path = []
         
@@ -151,8 +248,9 @@ class Astar(object):
             if next_node == self.start:
                 break
         
-        return shortest_path[::-1]
+        return shortest_path
     
+
     def possible_directions(self, coor):
         # Corners of the map
         if coor[0] == 0 and coor[1] == 0:
@@ -177,16 +275,17 @@ class Astar(object):
             
         return [d for d in self.directions if d not in help_list]
     
+
     def get_optimal_path(self):
         return self.optimal_path
             
+
     def optimize(self):
         open_queue = PQueue()
         closed_dict = dict()
         
         if self._map[self.start.coor] == '#' or self._map[self.goal.coor] == '#':
             raise ValueError("Initial/Final position cannot be on a wall \'#\'.")
-            #return []
         
         # Add start node to queue
         open_queue._put((self.start.f, self.start))
@@ -198,8 +297,8 @@ class Astar(object):
             closed_dict[current_node.coor] = None
 
             if current_node == self.goal:
-                self.optimized_path = self.get_path(current_node)
-                return self.optimized_path
+                self.optimal_path = self.get_path(current_node)
+                return self.get_optimal_path()
             
             pos = current_node.coor
             for d in self.possible_directions(pos):
@@ -224,25 +323,3 @@ class Astar(object):
                         open_queue.queue[idx_node].f = open_queue.queue[idx_node].g + same_node.h
         
         return [] # return empty list if no feasible path to goal exists
-
-
-
-# Intialize instance of map memory
-mem_ = MapMemory(10,10)
-
-# Initialize random objects (wall or free space) on tiles
-for x in range(10):
-    for y in range(10):
-        char = '#' if random() <= 0.01 else '.'
-        mem_[(x,y)] = char
-
-# Show map
-print(mem_)
-
-# Intialize instance of pathfinder
-# Since map is randomly initialized check whether start and goal
-# are not walls '#' otherwise a corresponding error will be raised
-pathfinder = Astar(mem_, start=(2,3), goal=(0,0))
-
-# NB: if no path leads from start to goal then and empty list is returned
-print(pathfinder.optimize())
