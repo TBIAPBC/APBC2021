@@ -54,13 +54,34 @@ class ROBNIC(Player):
         if random.random() <= 0.25:
             print("I can already feel the gold … I want more …")
 
+    def decide_on_moves(self, status):        
+        moves_this_turn = [self.moves_to_make.pop()]
+        if status.gold > 35 and random.random() <= 0.9 and self.moves_to_make != []:
+            moves_this_turn.append(self.moves_to_make.pop())
+            if status.gold > 65 and random.random() <= 0.85 and self.moves_to_make != []:
+                moves_this_turn.append(self.moves_to_make.pop())
+                if status.gold > 80 and random.random() <= 0.75 and self.moves_to_make != []:
+                    moves_this_turn.append(self.moves_to_make.pop())
+                    if status.gold > 150 and random.random() <= 0.8 and self.moves_to_make != []:
+                        moves_this_turn.append(self.moves_to_make.pop())
+                        if status.gold > 180 and random.random() <= 0.75 and self.moves_to_make != []:
+                            moves_this_turn.append(self.moves_to_make.pop())
+                            if status.gold > 240 and random.random() <= 0.8 and self.moves_to_make != []:
+                                moves_this_turn.append(self.moves_to_make.pop())
+                                if status.gold > 300 and random.random() <= 0.8 and self.moves_to_make != []:
+                                    moves_this_turn.append(self.moves_to_make.pop())
+                                    if random.random() <= 0.5 and self.moves_to_make != []:
+                                        moves_this_turn.append(self.moves_to_make.pop())
+                                    if random.random() <= 0.5 and self.moves_to_make != []:
+                                        moves_this_turn.append(self.moves_to_make.pop())
+        return moves_this_turn
 
     def move(self, status):
         
         myPos = (status.x,status.y)
         # Load objects from pickle file
         self.moves_prev_turn = load_moves_prev_turn()
-        self.moves_to_make = load_moves_to_make()
+        self.moves_to_make = load_moves_to_make()  
 
         # Check whether any moves have been cancelled 
         # and if so add them back to the moves_to_make
@@ -70,17 +91,13 @@ class ROBNIC(Player):
                 numMoves += 1
                 if myPos == pos:
                     break
-        
-        if status.health >= 35:
-            if numMoves == len(self.moves_prev_turn[1]):        
-                moves_this_turn = [self.moves_to_make.pop()]
-                if status.gold > 40 and random.random() <= 0.8 and self.moves_to_make != []:
-                    moves_this_turn.append(self.moves_to_make.pop())
-                    if status.gold > 75 and random.random() <= 0.75 and len(self.moves_to_make) > 3:
-                        moves_this_turn.append(self.moves_to_make.pop())
+         
+        if status.health >= 30:
+            if numMoves == len(self.moves_prev_turn[1]) and self.moves_to_make != []:
+                moves_this_turn = self.decide_on_moves(status)
             else:
                 moves_this_turn = self.moves_prev_turn[1][-(len(self.moves_prev_turn[1])-numMoves):]
-        if status.health < 35:
+        if status.health < 30:
             moves_this_turn = []
             
         # Remember current moves and previous position for next turn
@@ -103,8 +120,14 @@ class ROBNIC(Player):
         self.moves_to_make = load_moves_to_make()
         self.moves_prev_turn = load_moves_prev_turn()
 
+        # If goldPot has been relocated then empty self.moves_to_make and newly compute path
+        if ((self.round-1) / status.params.goldPotTimeOut) == 0:
+            self.moves_to_make = []
+
         if len(self.seen_tiles) != self.map_width * self.map_height:
             self.myMemory.update(status, self.seen_tiles)
+
+        print(f"\n\n\nPercentage of map that is known to ROBNIC: {round(len(self.seen_tiles)/self.map_width*self.map_height*100,2)}\n\n\n")
         
         myPos = (status.x,status.y)
         if self.moves_to_make == []:
@@ -128,7 +151,7 @@ class ROBNIC(Player):
                 set_mine = True
                 
         tiles_for_mines = []
-        if set_mine and random.random() <= 0.7 and status.gold >= 50:
+        if set_mine and random.random() <= 0.9 and status.gold >= 100:
             for _d in self.directions:
                 tiles_for_mines.append(self.coor_dir_update(myPos, _d))
         if tiles_for_mines == []:
