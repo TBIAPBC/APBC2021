@@ -113,7 +113,7 @@ class SemiRandBot(Player):
 
 
 class Pathfinding_Bot(Player):
-    # TODO: add dynamic step size and avoid other players,
+    # TODO: add dynamic step size,
     #       add setting of mines
     def reset(self, player_id, max_players, width, height):
         self.player_name = "Gnium"
@@ -147,15 +147,11 @@ class Pathfinding_Bot(Player):
         moves = []
         path = []
         
-        #is a player nearby? --> remove node to treat as wall
-        # TODO: maybe predict path of other player for 1-3 steps?
-        if status.others != []:
-            for p in status.others:
-                if p is not None:
-                    pLoc = (p.x, p.y)
-                    if self.graph.__contains__(pLoc):
-                        self.graph.remove_node(pLoc)
-
+        #is a player nearby? --> predict path and remove nodes to treat as wall
+        self.predict_others(status, gLoc, currPos)
+        
+        #TODO: implement strategy for moving
+        
         # gold location is in graph and has neigbours, i.e. was/is visible
         if nx.has_path(self.graph, currPos, gLoc):
             path = nx.shortest_path(self.graph, currPos, gLoc, method = "bellman-ford")
@@ -186,8 +182,9 @@ class Pathfinding_Bot(Player):
 
     def distance(self, gLoc):
         for tile in self.vis_tiles:
-            dist = math.sqrt((gLoc[0] - tile[0])**2 + (gLoc[1] - tile[1])**2)
-            self.vis_dir[tile] = dist
+            if self.graph.__contains__(tile):
+                dist = math.sqrt((gLoc[0] - tile[0])**2 + (gLoc[1] - tile[1])**2)
+                self.vis_dir[tile] = dist
 
     def _as_direction(self, curpos, nextpos):
         for d in D:
@@ -195,7 +192,33 @@ class Pathfinding_Bot(Player):
             if (curpos[0] + di[0], curpos[1] + di[1]) == nextpos:
                 return d
         return None
-
+    
+    def predict_others(self, status, gLoc, currPos):
+        if status.others != []:
+            for p in status.others:
+                if p is not None:
+                    pLoc = (p.x, p.y)
+                    if self.graph.__contains__(pLoc):
+                        pred_direct = [(x, y) for x in [-2,0,2] for y in [-2,0,2] if((x,y) != (0,0))]
+                        predPos = {}
+                        for d in pred_direct:
+                            tile = (pLoc[0]+d[0], pLoc[1]+d[1])
+                            if (tile[0] >= 0 and tile[0] < self.tmap.width) and (tile[1] >= 0 and tile[1] < self.tmap.height):
+                                if status.map[tile].status == TileStatus.Empty:
+                                    pdist = math.sqrt((gLoc[0] - tile[0])**2 + (gLoc[1] - tile[1])**2)
+                                    if tile not in predPos:
+                                        predPos[tile] = pdist
+                        pPath = []
+                        for pt, pd in sorted(predPos.items(), key=lambda x: x[1]):
+                            if self.graph.__contains__(pt):
+                                if nx.has_path(self.graph, pLoc, pt):
+                                    pPath = nx.shortest_path(self.graph, pLoc, pt, method = "bellman-ford")
+                                if pPath != []:
+                                    break
+                        for pMove in pPath:
+                            if self.graph.__contains__(pMove) and pMove != gLoc and pMove != currPos:
+                                self.graph.remove_node(pMove)
+    
     def map_update(self, status):
         vis = status.params.visibility
         for x in range(self.tmap.width):
