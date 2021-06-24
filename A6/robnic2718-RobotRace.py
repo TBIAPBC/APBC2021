@@ -67,30 +67,33 @@ class ROBNIC(Player):
                 if tile_next2me in pos_players_in_reach:
                     return []
 
+        if status.health < 90:
+            return []
+
         print("\n\n\nMoves_to_make:",self.moves_to_make)
         make_all_moves = False
         for pos in self.update_coors((status.x,status.y), self.moves_to_make):
             if pos == self.gold_pos:
                 make_all_moves = True
         
-        if len(self.moves_to_make) <= 15:
-            if not make_all_moves:
+        if len(self.moves_to_make) <= 18:
+            if not make_all_moves and self.moves_to_make != []:
                 moves_this_turn = [self.moves_to_make.pop()]
-                if status.gold > 35 and random.random() <= 0.9 and self.moves_to_make != []:
+                if status.gold > 50 and random.random() <= 0.9 and self.moves_to_make != []:
                     moves_this_turn.append(self.moves_to_make.pop())
-                    if status.gold > 45 and random.random() <= 0.9 and self.moves_to_make != []:
+                    if status.gold > 80 and random.random() <= 0.9 and self.moves_to_make != []:
                         moves_this_turn.append(self.moves_to_make.pop())
-                        if status.gold > 60 and random.random() <= 0.9 and self.moves_to_make != []:
+                        if status.gold > 100 and random.random() <= 0.9 and self.moves_to_make != []:
                             moves_this_turn.append(self.moves_to_make.pop())
-                            if status.gold > 80 and random.random() <= 0.9 and self.moves_to_make != []:
+                            if status.gold > 120 and random.random() <= 0.9 and self.moves_to_make != []:
                                 moves_this_turn.append(self.moves_to_make.pop())
-                                if status.gold > 120 and random.random() <= 0.8 and self.moves_to_make != []:
+                                if status.gold > 180 and random.random() <= 0.8 and self.moves_to_make != []:
                                     moves_this_turn.append(self.moves_to_make.pop())
-                                    if status.gold > 150 and random.random() <= 0.8 and self.moves_to_make != []:
+                                    if status.gold > 220 and random.random() <= 0.8 and self.moves_to_make != []:
                                         moves_this_turn.append(self.moves_to_make.pop())
-                                        if status.gold > 200 and random.random() <= 0.8 and self.moves_to_make != []:
+                                        if status.gold > 300 and random.random() <= 0.8 and self.moves_to_make != []:
                                             moves_this_turn.append(self.moves_to_make.pop())
-                                            if self.moves_to_make != [] and random.random() <= 0.6:
+                                            if self.moves_to_make != [] and random.random() <= 0.6 and status.gold > 350:
                                                 moves_this_turn.append(self.moves_to_make.pop())
                                                 if random.random() <= 0.5 and self.moves_to_make != []:
                                                     moves_this_turn.append(self.moves_to_make.pop())
@@ -99,15 +102,13 @@ class ROBNIC(Player):
                 for n_ in range(len(self.moves_to_make)):
                     if (n_ >= 4 and status.gold <= 100) or (n_ >= 6 and status.gold <= 220) or n_ >= 8:
                         break
-                    if status.gold > move_costs(n_):
+                    if status.gold > move_costs(n_) + 25:
                         numMoves += 1
                 for _ in range(numMoves):
                     moves_this_turn.append(self.moves_to_make.pop())
         else:
             moves_this_turn = [self.moves_to_make.pop()]
-            if random.random() <= 0.9 and status.gold > 40 and self.moves_to_make != []:
-                moves_this_turn.append(self.moves_to_make.pop())
-            if random.random() <= 0.9 and status.gold > 60 and self.moves_to_make != []:
+            if random.random() <= 0.9 and status.gold > 100 and self.moves_to_make != []:
                 moves_this_turn.append(self.moves_to_make.pop())
 
         return moves_this_turn
@@ -117,16 +118,7 @@ class ROBNIC(Player):
         myPos = (status.x,status.y)
         # Load objects from pickle file
         self.moves_prev_turn = load_moves_prev_turn()
-        self.moves_to_make = load_moves_to_make()  
-
-        # Check whether any moves have been cancelled 
-        # and if so add them back to the moves_to_make
-        numMoves = 0
-        if self.moves_prev_turn[1] != [] and myPos != self.moves_prev_turn[0]:
-            for pos in self.update_coors(self.moves_prev_turn[0], self.moves_prev_turn[1]):
-                numMoves += 1
-                if myPos == pos:
-                    break
+        self.moves_to_make = load_moves_to_make()
          
         if status.health >= 30:
             moves_this_turn = self.decide_on_moves(status)
@@ -134,7 +126,7 @@ class ROBNIC(Player):
             moves_this_turn = []
             
         # Remember current moves and previous position for next turn
-        self.moves_prev_turn = (myPos, moves_this_turn, numMoves)
+        self.moves_prev_turn = (myPos, moves_this_turn)
         # Save objects to pickle file
         save_moves_prev_turn(self.moves_prev_turn)
         save_moves_to_make(self.moves_to_make)
@@ -160,20 +152,21 @@ class ROBNIC(Player):
         if len(self.seen_tiles) != self.map_width * self.map_height:
             self.myMemory.update(status, self.seen_tiles)
 
-        if self.moves_to_make == [] or self.moves_prev_turn[2] >= 1:
-            myPos = (status.x,status.y)
-            min_approxDist2gold = min([self.approx_distance(myPos,gp) for gp in status.goldPots.keys()])
-            self.gold_pos = [item[0] for item in status.goldPots.items() if self.approx_distance(myPos,item[0]) == min_approxDist2gold][0]
-            tile_approxDist = [(tile, self.approx_distance(tile, self.gold_pos)) for tile in self.myMemory.free_tiles(myPos)]
-            tile_approxDist.sort(key=lambda x:x[1])
+        myPos = (status.x,status.y)
+        min_approxDist2gold = min([self.approx_distance(myPos,gp) for gp in status.goldPots.keys()])
+        self.gold_pos = [item[0] for item in status.goldPots.items() 
+                         if self.approx_distance(myPos,item[0]) == min_approxDist2gold][0]
+        tile_approxDist = [(tile, self.approx_distance(tile, self.gold_pos)) 
+                           for tile in self.myMemory.free_tiles(myPos)]
+        tile_approxDist.sort(key=lambda x:x[1])
     
-            for tile in tile_approxDist:
-                # Initialize pathfinder
-                pathfinder = Astar(self.myMemory, myPos, tile[0])
-                self.moves_to_make = pathfinder.optimize()
+        for tile in tile_approxDist:
+            # Initialize pathfinder
+            pathfinder = Astar(self.myMemory, myPos, tile[0])
+            self.moves_to_make = pathfinder.optimize()
             
-                if self.moves_to_make != []:
-                    break
+            if self.moves_to_make != []:
+                break
         
         set_mine = False
         myPos = (status.x, status.y)
