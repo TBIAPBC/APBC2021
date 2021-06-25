@@ -124,7 +124,7 @@ class Tile(object):
 		self.status = status
 		self.obj = obj
 		if obj is not None:
-			assert not is_blocked()
+			assert not self.is_blocked()
 
 	def is_blocked(self):
 		return self.status.is_blocked()
@@ -290,7 +290,7 @@ class GameParameters(object):
 		self.healthPerWallCrash = 25
 		self.healthPerPlayerCrash = 15
 		self.healthPerPlayerCrashRandom = 5
-
+		self.airstrikecost=50
 		self.moveTimeout = 2 # players get at most moveTimeout seconds to answer each move request
 
 		self.mineExpiryTime = 3 # how many rounds do mines exist
