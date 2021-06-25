@@ -124,7 +124,7 @@ class Tile(object):
 		self.status = status
 		self.obj = obj
 		if obj is not None:
-			assert not is_blocked()
+			assert not self.is_blocked()
 
 	def is_blocked(self):
 		return self.status.is_blocked()

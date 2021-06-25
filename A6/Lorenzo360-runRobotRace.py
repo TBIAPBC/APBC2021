@@ -15,15 +15,11 @@ parser.add_argument('--number', help="number of rounds", type=int, default=1000)
 parser.add_argument('--density', help="map density", type=float, default=0.4)
 parser.add_argument('--framerate', help="specify framerate of the visualization", type=int, default=8)
 parser.add_argument('--map', help="specify map file", type=str,default=None)
-
+parser.add_argument('--suddenDeathMode',help="Enable random bombs dropped on map. Changes map.",action='store_true')
 args = parser.parse_args()
 
 #robot_module_names = {"beatme":"beatme-RobotRace","Lorenzo360":"Lorenzo360-RobotRace"}
-#robot_module_names = {"Lorenzo360":"Lorenzo360-RobotRace"}
-#robot_module_names = {"beatme":"beatme-RobotRace","test":"test-RobotRace","Lorenzo360":"Lorenzo360-RobotRace"}
-#robot_module_names = {"Lorenzo360_2":"Lorenzo360-RobotRace2","Lorenzo360":"Lorenzo360-RobotRace"}
-#robot_module_names = {"Beicht":"Beicht-Robot","Lorenzo360":"Lorenzo360-RobotRace"}
-robot_module_names = {"beatme":"beatme-RobotRace","Lorenzo360_1":"Lorenzo360-RobotRace","Lorenzo360_3":"Lorenzo360-RobotRace3"}
+robot_module_names = {"beat-me":"beatme-RobotRace","Lorenzo360_3":"Lorenzo360-RobotRace5"}
 
 
 robotmodules = { m:__import__(m) for m in robot_module_names.values() }
@@ -33,7 +29,7 @@ if args.map is not None:
 else:
    m = Map.makeRandom(30, 30, args.density)
 #m = Map.read("Maps/empty.dat")
-sim = Simulator(map=m, vizfile=args.viz, framerate=args.framerate)
+sim = Simulator(map=m, vizfile=args.viz, framerate=args.framerate,suddenDeathMode=args.suddenDeathMode)
 
 for name,module_name in robot_module_names.items():
 	for p in robotmodules[module_name].players:

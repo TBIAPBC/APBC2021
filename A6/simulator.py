@@ -15,8 +15,9 @@ from game_utils import Map, Status, GameParameters
 from illustrator import Illustrator
 
 class Simulator(object):
-	def __init__(self, *, map, seed=None, vizfile=None, framerate):
+	def __init__(self, *, map, seed=None, vizfile=None,suddenDeathMode=False, framerate):
 		self.rng = random.Random()
+		self.suddenDeathMode=suddenDeathMode
 		if seed is None:
 			seed = random.randrange(sys.maxsize)
 		self.rng.seed(seed)
@@ -51,6 +52,30 @@ class Simulator(object):
 		self._pubStat = pubStat = []  # the object we give the player each time, updated from the internal data
 
 		self.illustrator = Illustrator(self.map, vizfile, framerate)
+
+	def la_bombe(self):
+		DESTRUCTION_RADIUS=3
+		BOMB_PROBABILITY=0.05
+		RUBBLE_PROBABILITY=0.3
+		EXPLOSIVE_FRAGMENT_PROBABILITY=0.05
+		BOMB_DAMAGE=90
+		if self.rng.random()<BOMB_PROBABILITY:
+			print("BOMBED!")
+			x,y=(self.rng.randint(0, self.map.width - 1), self.rng.randint(0, self.map.height - 1))
+			for i in range(-DESTRUCTION_RADIUS,DESTRUCTION_RADIUS+1):
+				for j in range(-DESTRUCTION_RADIUS,DESTRUCTION_RADIUS+1):
+					tx, ty=(x+i, y+j)
+					if tx>=0 and tx<self.map.width and ty>=0 and ty<self.map.width and self.map[tx, ty].obj is None:
+						if self.rng.random()<RUBBLE_PROBABILITY:
+							self.map[tx, ty] = Tile(TileStatus.Wall)
+						elif self.rng.random()< EXPLOSIVE_FRAGMENT_PROBABILITY:
+							self.map[tx, ty] = Tile(TileStatus.Mine)
+						else:
+							self.map[tx, ty] = Tile(TileStatus.Empty)
+			for pId in range(len(self._players)):
+				if x-DESTRUCTION_RADIUS<=self._status[pId].x <= x+DESTRUCTION_RADIUS and y-DESTRUCTION_RADIUS<=self._status[pId].y <= y+DESTRUCTION_RADIUS:
+					self._status[pId].health-=BOMB_DAMAGE
+					print("Event: %s was hit by bomb." % nameFromPlayerId(pId))
 
 	def _random_empty_spot(self):
 		while True:
@@ -97,6 +122,8 @@ class Simulator(object):
 			self._handle_shooting(r)
 			self._handle_setting_mines(r)
 			self._handle_moving(r)
+			if self.suddenDeathMode:
+				self.la_bombe()
 			self._handle_healing(r)
 			# TODO: something to do at the end of the round?
 			self.illustrator.append_goldpots(self._goldPots)
