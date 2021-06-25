@@ -145,4 +145,19 @@ class CuriositySuddenDeathVersion(Player):
     def saveMemory(self):
         with open(self.memoryFile, 'wb') as f:
             np.save(f, [self.ourMap],allow_pickle=True)
+
+    def air_strike(self, status):
+        self.refreshMemory(status)
+        self.update_map(status)
+        targets=[]
+        if status.others!= []:
+            for state in status.others:
+                if state is not None and ((status.x-state.x)**2+(status.y-state.y)**2)**0.5>1.5 and  \
+                        state.health>0 and state.gold+1000>status.gold: # Assuming bomb radius=1
+                    targets.append((state.x, state.y))
+        if status.gold > (1000 - status.params.airstrikecost*len(targets)):
+            return targets
+        else:
+            return []
+
 players = [CuriositySuddenDeathVersion()]

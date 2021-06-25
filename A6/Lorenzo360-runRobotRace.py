@@ -19,7 +19,7 @@ parser.add_argument('--suddenDeathMode',help="Enable random bombs dropped on map
 args = parser.parse_args()
 
 #robot_module_names = {"beatme":"beatme-RobotRace","Lorenzo360":"Lorenzo360-RobotRace"}
-robot_module_names = {"beat-me":"beatme-RobotRace","Lorenzo360_3":"Lorenzo360-RobotRace5"}
+robot_module_names = {"beicht":"Beicht-Robot","robnic":"robnic2718-RobotRace","beat-me":"beatme-RobotRace","Lorenzo360_3":"Lorenzo360-RobotRace5"}
 
 
 robotmodules = { m:__import__(m) for m in robot_module_names.values() }

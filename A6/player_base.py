@@ -9,6 +9,9 @@ class Player(object):
 	def move(self, status):
 		raise NotImplementedError("'move' not implemented in '%s'." % self.__class__)
 
+	def air_strike(self, status):
+		raise NotImplementedError("'air_strike' not implemented in '%s'." % self.__class__)
+
 	def set_mines(self, status):
 		"""
 		Called to ask the player to set mines

@@ -53,17 +53,16 @@ class Simulator(object):
 
 		self.illustrator = Illustrator(self.map, vizfile, framerate)
 
-	def la_bombe(self):
-		DESTRUCTION_RADIUS=3
-		BOMB_PROBABILITY=0.05
+	def la_bombe(self,target_xy,bomb_probability=0.05,destruction_radius=3):
+		x=target_xy[0]
+		y=target_xy[1]
 		RUBBLE_PROBABILITY=0.3
 		EXPLOSIVE_FRAGMENT_PROBABILITY=0.05
-		BOMB_DAMAGE=90
-		if self.rng.random()<BOMB_PROBABILITY:
+		BOMB_DAMAGE=100
+		if self.rng.random()<bomb_probability:
 			print("BOMBED!")
-			x,y=(self.rng.randint(0, self.map.width - 1), self.rng.randint(0, self.map.height - 1))
-			for i in range(-DESTRUCTION_RADIUS,DESTRUCTION_RADIUS+1):
-				for j in range(-DESTRUCTION_RADIUS,DESTRUCTION_RADIUS+1):
+			for i in range(-destruction_radius,destruction_radius+1):
+				for j in range(-destruction_radius,destruction_radius+1):
 					tx, ty=(x+i, y+j)
 					if tx>=0 and tx<self.map.width and ty>=0 and ty<self.map.width and self.map[tx, ty].obj is None:
 						if self.rng.random()<RUBBLE_PROBABILITY:
@@ -73,7 +72,7 @@ class Simulator(object):
 						else:
 							self.map[tx, ty] = Tile(TileStatus.Empty)
 			for pId in range(len(self._players)):
-				if x-DESTRUCTION_RADIUS<=self._status[pId].x <= x+DESTRUCTION_RADIUS and y-DESTRUCTION_RADIUS<=self._status[pId].y <= y+DESTRUCTION_RADIUS:
+				if x-destruction_radius<=self._status[pId].x <= x+destruction_radius and y-destruction_radius<=self._status[pId].y <= y+destruction_radius:
 					self._status[pId].health-=BOMB_DAMAGE
 					print("Event: %s was hit by bomb." % nameFromPlayerId(pId))
 
@@ -119,11 +118,13 @@ class Simulator(object):
 
 		for r in range(1, rounds + 1):
 			self._begin_round(r)
+			self._handle_airstrike(r)
 			self._handle_shooting(r)
 			self._handle_setting_mines(r)
 			self._handle_moving(r)
 			if self.suddenDeathMode:
-				self.la_bombe()
+				target_xy = (self.rng.randint(0, self.map.width - 1), self.rng.randint(0, self.map.height - 1))
+				self.la_bombe(target_xy)
 			self._handle_healing(r)
 			# TODO: something to do at the end of the round?
 			self.illustrator.append_goldpots(self._goldPots)
@@ -211,6 +212,49 @@ class Simulator(object):
 	def _handle_shooting(self, r):
 		# TODO
 		pass
+
+	def _handle_airstrike(self,r):
+		for pId in range(len(self._players)):
+			player = self._players[pId]
+			pstatus = player.status
+			# Ask players where they want to conduct airstrike
+			try:
+				airstrikes = list(self._players[pId].air_strike(self._pubStat[pId]))
+				# check that the answer is in correct
+				# format
+				for (x, y) in airstrikes:
+					if not (isinstance(x, int) and
+							isinstance(y, int)):
+						raise TypeError("Player's set mines must return list of coordinates")
+					# catch out of bounds -- errors invalidate the entire action
+					if x < 0 or x >= self.map.width or y < 0 or y >= self.map.height:
+						raise ValueError("Mine coordinates not on the map")
+
+			except NotImplementedError as e:
+				# if not implemented, simply pass w/o
+				# making some fuzz about it
+				airstrikes = []
+
+			except Exception as e:
+				print("ERROR: player %d raised an exception: %s" % (pId, str(e)))
+				traceback.print_exc(file=sys.stdout)
+				airstrikes = []
+
+			# Conduct airstrikes and charge the player
+			for xy in airstrikes:
+				paid = True
+				if self._status[pId].gold<self.params.airstrikecost:
+					paid=False
+				else:
+					self._status[pId].gold-=self.params.airstrikecost
+					paid = True
+				if paid:
+					# Conduct airstrike
+					# if it is legal to place it (otherwise ignore, but still charge!)
+					self.la_bombe(xy,bomb_probability=1,destruction_radius=1)
+					print("Player %s orders airstrike at %s."% (str(pId), str(xy)))
+				else:
+					break  # don't even try conduct more airstrikes
 
 	def _handle_setting_mines(self, r):
 		# just go through players and set their mines - rules are

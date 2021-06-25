@@ -117,7 +117,7 @@ class Curiosity(Player):
         self.refreshMemory(status)
         self.update_map(status)
         self.saveMemory()
-
+        #print(self.ourMap)
         # Find best path and develop move strategy
         curpos = (status.x, status.y)
         self.other_players_are_walls(status,self.ourMap) # This changed map is not saved, it is just used for best path calculation
