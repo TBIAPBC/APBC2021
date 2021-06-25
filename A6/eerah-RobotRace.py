@@ -123,10 +123,11 @@ class basic(Player):
 			bestpath_target_gold.pop(0)
 			if bestpath_target_gold:
 				obj_pos=bestpath_target_gold[0]
-			if self._distance(obj_pos, curpos) < 4 and self._distance(gLoc, curpos) < 12:
+			if self._distance(obj_pos, curpos) < 4 and self._distance(gLoc, curpos) < 7:
 				# print("save spot at {}".format(m))
 				mine_pos = [(obj_pos[0], obj_pos[1])]
-		return mine_pos
+		return []
+		#return mine_pos
 
 	def get_poosition_others(self, status):
 		pos_other=[]
@@ -156,8 +157,11 @@ class basic(Player):
 		bestpath=nx.shortest_path(G, source=curpos, target=gLoc, weight="weight")
 		bestpath.pop(0)#is current position
 
+		numMoves = 3
+		if len(bestpath) > 25:
+			numMoves=0
 
-		return self._as_directions(curpos, bestpath[:4])
+		return self._as_directions(curpos, bestpath[:numMoves])
 
 
 players = [basic()]
