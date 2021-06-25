@@ -24,6 +24,7 @@ class CuriositySuddenDeathVersion(Player):
         self.memoryFile=tempfile.gettempdir()+'/Lorenzo360-RobotRace-Mem3.npy'
         self.saveMemory()
         self.minProfit=20
+        self.airstrike_prob=0.3
 
     def round_begin(self, r):
         pass
@@ -153,11 +154,17 @@ class CuriositySuddenDeathVersion(Player):
         if status.others!= []:
             for state in status.others:
                 if state is not None and ((status.x-state.x)**2+(status.y-state.y)**2)**0.5>1.5 and  \
-                        state.health>0 and state.gold+1000>status.gold: # Assuming bomb radius=1
+                        state.health>0 and status.gold - 1000 < state.gold and \
+                        self.distance2gold(status,(state.x,state.y))<self.distance2gold(status,(status.x,status.y)):  # Assuming bomb radius=1
                     targets.append((state.x, state.y))
-        if status.gold > (1000 - status.params.airstrikecost*len(targets)):
+
+        if status.gold - status.params.airstrikecost*len(targets) > 1000 and random.random()<self.airstrike_prob:
             return targets
         else:
             return []
 
+    def distance2gold(self,status,curPos):
+        goldPos = next(iter(status.goldPots))
+        goldVector = (goldPos[0] - curPos[0], goldPos[1] - curPos[1])
+        return (goldVector[0]**2+goldVector[1]**2)**0.5
 players = [CuriositySuddenDeathVersion()]
