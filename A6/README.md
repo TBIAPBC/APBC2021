@@ -14,6 +14,23 @@ ideas and even share code via Github and/or offline. The more actively
 you contribute and discuss details of the game the more fun this will
 be :).
 
+# eerah-RobotRace.py
+
+Uses the shortest path algorithm and takes maximal 4 steps at a time. 
+Its name is the class "basic".
+
+## Mines
+
+Mines are set when: <br>
+ 
+ * Gold is within range < 12 <br>
+ * Another player is within range < 4
+ * strategie is to set mines between gold and another player
+
+## other stuff
+
+Robot will not crash into other players anymore. 
+
 
 ## Rules
 
