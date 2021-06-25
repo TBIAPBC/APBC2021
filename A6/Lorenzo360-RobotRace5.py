@@ -24,7 +24,7 @@ class CuriositySuddenDeathVersion(Player):
         self.memoryFile=tempfile.gettempdir()+'/Lorenzo360-RobotRace-Mem3.npy'
         self.saveMemory()
         self.minProfit=20
-        self.airstrike_prob=0.3
+        self.airstrike_prob=0.5
 
     def round_begin(self, r):
         pass
@@ -148,13 +148,14 @@ class CuriositySuddenDeathVersion(Player):
             np.save(f, [self.ourMap],allow_pickle=True)
 
     def air_strike(self, status):
+        STRIKE_TRIGGER_DIST= 6 #only if other robot is closer than this to gold an airstrike is ordered
         self.refreshMemory(status)
         self.update_map(status)
         targets=[]
         if status.others!= []:
             for state in status.others:
                 if state is not None and ((status.x-state.x)**2+(status.y-state.y)**2)**0.5>1.5 and  \
-                        state.health>0 and status.gold - 1000 < state.gold and \
+                        state.health>0 and self.distance2gold(status,(state.x,state.y))< STRIKE_TRIGGER_DIST and\
                         self.distance2gold(status,(state.x,state.y))<self.distance2gold(status,(status.x,status.y)):  # Assuming bomb radius=1
                     targets.append((state.x, state.y))
 

@@ -56,7 +56,7 @@ class Simulator(object):
 	def la_bombe(self,target_xy,bomb_probability=0.05,destruction_radius=3):
 		x=target_xy[0]
 		y=target_xy[1]
-		RUBBLE_PROBABILITY=0.3
+		MAX_RUBBLE_PROBABILITY=0.5
 		EXPLOSIVE_FRAGMENT_PROBABILITY=0.05
 		BOMB_DAMAGE=100
 		if self.rng.random()<bomb_probability:
@@ -64,18 +64,23 @@ class Simulator(object):
 			for i in range(-destruction_radius,destruction_radius+1):
 				for j in range(-destruction_radius,destruction_radius+1):
 					tx, ty=(x+i, y+j)
-					if tx>=0 and tx<self.map.width and ty>=0 and ty<self.map.width and self.map[tx, ty].obj is None:
-						if self.rng.random()<RUBBLE_PROBABILITY:
+					distance=round(self.euclidean_dist((x,y),(tx,ty)))
+					if tx>=0 and tx<self.map.width and ty>=0 and ty<self.map.width and self.map[tx, ty].obj is None and distance <= destruction_radius:
+						if self.rng.random()<min(MAX_RUBBLE_PROBABILITY,distance/destruction_radius):
 							self.map[tx, ty] = Tile(TileStatus.Wall)
 						elif self.rng.random()< EXPLOSIVE_FRAGMENT_PROBABILITY:
 							self.map[tx, ty] = Tile(TileStatus.Mine)
 						else:
 							self.map[tx, ty] = Tile(TileStatus.Empty)
 			for pId in range(len(self._players)):
-				if x-destruction_radius<=self._status[pId].x <= x+destruction_radius and y-destruction_radius<=self._status[pId].y <= y+destruction_radius:
-					self._status[pId].health-=BOMB_DAMAGE
-					print("Event: %s was hit by bomb." % nameFromPlayerId(pId))
-
+				distance=round(self.euclidean_dist((x,y), (self._status[pId].x,self._status[pId].y)))
+				if distance <= destruction_radius:
+					damage = round(max(BOMB_DAMAGE*0.2,BOMB_DAMAGE*(1-distance/destruction_radius)))
+					self._status[pId].health-=damage
+					print("Event: "+nameFromPlayerId(pId)+" was hit by bomb: Distance to bomb: " + str(distance) + ", damage: " + str(damage)+".")
+	def euclidean_dist(self,xy1,xy2):
+		v =(xy2[0]-xy1[0], xy2[1]-xy1[1])
+		return (v[0]**2 + v[1]**2)**0.5
 	def _random_empty_spot(self):
 		while True:
 			x = self.rng.randint(0, self.map.width - 1)
@@ -124,7 +129,7 @@ class Simulator(object):
 			self._handle_moving(r)
 			if self.suddenDeathMode:
 				target_xy = (self.rng.randint(0, self.map.width - 1), self.rng.randint(0, self.map.height - 1))
-				self.la_bombe(target_xy)
+				self.la_bombe(target_xy,destruction_radius=4,bomb_probability=0.05)
 			self._handle_healing(r)
 			# TODO: something to do at the end of the round?
 			self.illustrator.append_goldpots(self._goldPots)
@@ -252,7 +257,7 @@ class Simulator(object):
 					# Conduct airstrike
 					# if it is legal to place it (otherwise ignore, but still charge!)
 					self.la_bombe(xy,bomb_probability=1,destruction_radius=1)
-					print("Player %s orders airstrike at %s."% (str(pId), str(xy)))
+					print("Player %s ordered airstrike at %s."% (str(pId), str(xy)))
 				else:
 					break  # don't even try conduct more airstrikes
 

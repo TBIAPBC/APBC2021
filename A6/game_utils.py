@@ -290,7 +290,7 @@ class GameParameters(object):
 		self.healthPerWallCrash = 25
 		self.healthPerPlayerCrash = 15
 		self.healthPerPlayerCrashRandom = 5
-		self.airstrikecost=100
+		self.airstrikecost=50
 		self.moveTimeout = 2 # players get at most moveTimeout seconds to answer each move request
 
 		self.mineExpiryTime = 3 # how many rounds do mines exist
