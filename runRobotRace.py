@@ -18,14 +18,10 @@ parser.add_argument('--map', help="specify map file", type=str,default=None)
 
 args = parser.parse_args()
 
-robot_module_names = {"Beatme": "beatme-RobotRace",
-		      "Markus_Final": "Markus_Final-RobotRace",
-		      "eerah": "eerah-RobotRace",
-		      "Lorenzo360":"Lorenzo360-RobotRace"}
-"""
-robot_module_names = {"Markus_New": "Markus_New-RobotRace",
-		      "Markus_New2": "Markus_New2-RobotRace"}
-"""
+robot_module_names = {"Test":"test-RobotRace",
+		      "Beatme": "beatme-RobotRace",
+		      "Markus_Risky": "Markus_Risky-RobotRace"}
+
 robotmodules = { m:__import__(m) for m in robot_module_names.values() }
 
 if args.map is not None:
