@@ -108,34 +108,31 @@ class SemiRandBot(Player):
 
         return moves
 
-    # def set_mines(self, status):
-        # pass
-
-
 class Pathfinding_Bot(Player):
     # TODO: add dynamic step size,
     #       add setting of mines
     def reset(self, player_id, max_players, width, height):
         self.player_name = "Gnium"
         self.tmap = Map(width, height)
-        self.moves = [D.up, D.left, D.down, D.right, D.up,
-                      D.up_left, D.down_left, D.down_right, D.up_right]
+        self.moves = []
+        self.path = []
         self.directions = [(0,  1), (0, -1), (-1,  0), (1,  0),
                            (-1,  1), (1,  1), (-1, -1), (1, -1)]
         self.graph = nx.DiGraph()
         self.storage = tempfile.NamedTemporaryFile()
         self.temp = self.storage.name
-        self.maxmoves = 5
         self.vis_tiles = []
         self.vis_dir = {}
+        self.ndist = 0
         self.write_mem()
 
     def round_begin(self, r):
-        pass
+        self.maxmoves = 5
+        self.restrain_moves = 10
 
     def move(self, status):
         gLoc = next(iter(status.goldPots))
-
+        
         currPos = (status.x, status.y)
 
         # read, update and save graph
@@ -144,42 +141,82 @@ class Pathfinding_Bot(Player):
         self.write_mem()
         
         # determine the shortest path
-        moves = []
-        path = []
         
         #is a player nearby? --> predict path and remove nodes to treat as wall
         self.predict_others(status, gLoc, currPos)
         
-        #TODO: implement strategy for moving
-        
         # gold location is in graph and has neigbours, i.e. was/is visible
         if nx.has_path(self.graph, currPos, gLoc):
-            path = nx.shortest_path(self.graph, currPos, gLoc, method = "bellman-ford")
-
-
+            self.path = nx.shortest_path(self.graph, currPos, gLoc, method = "bellman-ford")
+            
         # else get closer to gold pot using pythagoras as distance measure
         else:
             # find closest point in visibility range, that is accessible
             self.distance(gLoc)
             for node, dist in sorted(self.vis_dir.items(), key=lambda x: x[1]):
                 if nx.has_path(self.graph, currPos, node):
-                    path = nx.shortest_path(self.graph, currPos, node, method = "bellman-ford")
-                if path != []:
+                    self.path = nx.shortest_path(self.graph, currPos, node, method = "bellman-ford")
+                    self.ndist = dist
+                if self.path != []:
                     break
-
-        rad = min(len(path)-1, self.maxmoves)
+                
+        self.evaluate(status, currPos, gLoc)
+        
+        rad = min(len(self.path)-1, self.maxmoves, self.restrain_moves)
         for i in range(rad):
-            if status.map[path[i+1][0], path[i+1][1]].status == TileStatus.Empty:
-                direction = self._as_direction(path[i], path[i+1])
-                moves.append(direction)
+            if status.map[self.path[i+1][0], self.path[i+1][1]].status == TileStatus.Empty:
+                direction = self._as_direction(self.path[i], self.path[i+1])
+                self.moves.append(direction)
             else:
                 break
-
-        return moves
+        
+        return self.moves
 
     def set_mines(self, status):
-        pass
+        return []
+    
+    def evaluate(self, status, currPos, gLoc):
+        goldInPot=list(status.goldPots.values())[0]
+        #goldTime = status.goldPotRemainingRounds
+        
+        mid = (int(self.tmap.width), int(self.tmap.height))
+        self.distance(mid)
 
+        if nx.has_path(self.graph, currPos, gLoc):
+            #Bot is very close and has enough funds --> get the gold pot!
+            if len(self.path)-1 <= self.maxmoves*2 and status.gold >= 60:
+                self.maxmoves = len(self.path)
+                self.restrain_moves = len(self.path)
+                
+            #Bot has no funds, save up
+            elif status.gold < 50 and len(self.path)-1 > self.maxmoves:
+                self.restrain_moves = 2
+            
+            #The pot is very far away, move slowly and maybe to the middle
+            elif len(self.path)-1 > self.maxmoves*2:
+                cost = sum(range(1, len(self.path[:self.maxmoves])))
+                if status.gold - cost + goldInPot < status.gold: #improve this calculation
+                    for node, dist in sorted(self.vis_dir.items(), key=lambda x: x[1]):
+                        if nx.has_path(self.graph, currPos, node):
+                            self.path = nx.shortest_path(self.graph, currPos, node, method = "bellman-ford")
+                        if self.path != []:
+                            break
+                else:
+                    self.restrain_moves = 3
+                
+        #Bot doesnt know the path to the gold, so he moves slower and explores
+        else:
+            if len(self.path)-1 >= self.maxmoves*2:
+                self.restrain_moves = 3
+                
+                #if status.gold - cost + goldInPot < status.gold:
+                if status.gold < 17 and self.ndist >= 5:
+                    for node, dist in sorted(self.vis_dir.items(), key=lambda x: x[1]):
+                        if nx.has_path(self.graph, currPos, node):
+                            self.path = nx.shortest_path(self.graph, currPos, node, method = "bellman-ford")
+                        if self.path != []:
+                            break
+        
     def distance(self, gLoc):
         for tile in self.vis_tiles:
             if self.graph.__contains__(tile):
