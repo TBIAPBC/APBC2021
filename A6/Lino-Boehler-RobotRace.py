@@ -84,7 +84,7 @@ class rob(Player):
                 #print(path)
             else:
                 # other wise move slower 
-                 self.maxMoves=3
+                 #self.maxMoves=3
                  close_node=my_pos
                  for node in self.G.nodes():
                      if node == gpos:
@@ -123,15 +123,15 @@ class rob(Player):
             
             
             path=self.find_path(status)
-            #self.maxMoves=self.speed(path,status)
+            self.maxMoves=self.speed(path,status)
            
             
             #print(path)
             if self.status.gold < 16 :
                 if len(path)+1 > 6:
                     self.maxMoves=1
-                else: 
-                    self.maxMoves=5
+                #else: 
+                    
             # select the first maxMoves = curentspeed, tile sfrom the list
             if len(path)+1 < self.maxMoves:
                 self.maxMoves=len(path)+1 
@@ -186,7 +186,7 @@ class rob(Player):
             my_pos=(status.x,status.y)
             #steps=int()
             # precentage of gold pot vaule to pay for movement
-            gold_pr=0.5
+            gold_pr=0.3
             gold=status.goldPots[gpos]/2
             if (nx.has_path(self.G, my_pos, gpos)) == True:
                 l=len(path)
@@ -204,7 +204,7 @@ class rob(Player):
                 
                 steps=self.opt_cost(l,gold,gold_pr)
                 
-                return 3 #round(steps*0.4)
+                return 2 #round(steps*0.4)
                 
         def opt_cost(self,l,gold,gold_pr):
             prev=[]
