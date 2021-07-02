@@ -141,7 +141,7 @@ class rob(Player):
             
             moves=self.path_to_movment(status,path)
             
-            self.predict_others()
+            #self.predict_others()
             
             #if self.cost_movment(self.distance(my_pos,gpos)) > status.goldPots[gpos]+status.goldPots[gpos]*0.2:
                 #return []
@@ -151,7 +151,7 @@ class rob(Player):
 
             return moves
         
-        def predict_others():
+        def predict_others(self,status):
             pass
         
         def distance (self,pos1,pos2):
