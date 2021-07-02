@@ -7,7 +7,7 @@ from game_utils import Direction as D
 
 
 def load_map_memory():
-    with open(tempfile.gettempdir()+"robnics_memory.pickle", "rb") as f:
+    with open(tempfile.gettempdir()+"/robnics_memory.pickle", "rb") as f:
         return pickle.load(f)
 
 
@@ -42,7 +42,7 @@ class MapMemory(object):
         
 
     def local_save(self):
-        with open(tempfile.gettempdir()+"robnics_memory.pickle", "wb") as f:
+        with open(tempfile.gettempdir()+"/robnics_memory.pickle", "wb") as f:
             pickle.dump(self, f)
     
 
