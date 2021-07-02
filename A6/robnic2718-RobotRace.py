@@ -1,13 +1,13 @@
+import random
+
+from copy import deepcopy
 from game_utils import nameFromPlayerId
 from game_utils import Direction as D, MoveStatus
 from game_utils import Tile, TileStatus, TileObject
 from game_utils import Map, Status
 from player_base import Player
-import random
-from robnic_toolbox import (load_map_memory, move_costs, 
-                            MapMemory, Astar, 
-                            save_moves_to_make, load_moves_to_make, 
-                            save_moves_prev_turn, load_moves_prev_turn)
+from robnic_toolbox import (load_map_memory, move_cost, 
+                            MapMemory, Astar)
 
 
 
@@ -16,10 +16,6 @@ class ROBNIC(Player):
         self.player_name = "Nicolas"
         self.seen_tiles = []
         self.moves_to_make = []
-        save_moves_to_make(self.moves_to_make)
-        self.moves_prev_turn = (None,[],None)
-        save_moves_prev_turn(self.moves_prev_turn)
-        self.round = 0
         self.directions = [D.up, D.down, D.left, D.right, 
                            D.up_left, D.up_right, D.down_left, D.down_right]
     
@@ -50,107 +46,61 @@ class ROBNIC(Player):
 
 
     def round_begin(self, r):
-        self.round += 1
-        if random.random() <= 0.25:
+        if random.random() <= 0.2:
             print("I can already feel the gold … I want more …")
 
     def decide_on_moves(self, status):
         moves_this_turn = []
+        myGold = deepcopy(status.gold)
 
-        pos_players_in_reach = []
-        for op in status.others:
-            if op is not None:
-                pos_players_in_reach.append((op.x, op.y))
-        
-        for _d in self.directions:
-            for tile_next2me in self.coor_dir_update((status.x, status.y), _d):
-                if tile_next2me in pos_players_in_reach:
-                    return []
-
-        if status.health < 90:
-            return []
-
-        print("\n\n\nMoves_to_make:",self.moves_to_make)
         make_all_moves = False
         for pos in self.update_coors((status.x,status.y), self.moves_to_make):
             if pos == self.gold_pos:
                 make_all_moves = True
-        
-        if len(self.moves_to_make) <= 18:
-            if not make_all_moves and self.moves_to_make != []:
-                moves_this_turn = [self.moves_to_make.pop()]
-                if status.gold > 50 and random.random() <= 0.9 and self.moves_to_make != []:
+
+        if not make_all_moves or len(self.moves_to_make) > int(self.map_width*0.5)-1:
+            for m in range(4):
+                prob = 1
+                if self.moves_to_make != [] and random.random() <= prob and int(myGold/move_cost(m+1)) > 4:
                     moves_this_turn.append(self.moves_to_make.pop())
-                    if status.gold > 80 and random.random() <= 0.9 and self.moves_to_make != []:
-                        moves_this_turn.append(self.moves_to_make.pop())
-                        if status.gold > 100 and random.random() <= 0.9 and self.moves_to_make != []:
-                            moves_this_turn.append(self.moves_to_make.pop())
-                            if status.gold > 120 and random.random() <= 0.9 and self.moves_to_make != []:
-                                moves_this_turn.append(self.moves_to_make.pop())
-                                if status.gold > 180 and random.random() <= 0.8 and self.moves_to_make != []:
-                                    moves_this_turn.append(self.moves_to_make.pop())
-                                    if status.gold > 220 and random.random() <= 0.8 and self.moves_to_make != []:
-                                        moves_this_turn.append(self.moves_to_make.pop())
-                                        if status.gold > 300 and random.random() <= 0.8 and self.moves_to_make != []:
-                                            moves_this_turn.append(self.moves_to_make.pop())
-                                            if self.moves_to_make != [] and random.random() <= 0.6 and status.gold > 350:
-                                                moves_this_turn.append(self.moves_to_make.pop())
-                                                if random.random() <= 0.5 and self.moves_to_make != []:
-                                                    moves_this_turn.append(self.moves_to_make.pop())
-            else:
-                numMoves = 0
-                for n_ in range(len(self.moves_to_make)):
-                    if (n_ >= 4 and status.gold <= 100) or (n_ >= 6 and status.gold <= 220) or n_ >= 8:
-                        break
-                    if status.gold > move_costs(n_) + 25:
-                        numMoves += 1
-                for _ in range(numMoves):
-                    moves_this_turn.append(self.moves_to_make.pop())
-        else:
-            moves_this_turn = [self.moves_to_make.pop()]
-            if random.random() <= 0.9 and status.gold > 100 and self.moves_to_make != []:
+                    prob *= 0.9
+
+        if myGold <= 80:
+            if self.moves_to_make != []:
                 moves_this_turn.append(self.moves_to_make.pop())
+            if self.moves_to_make != [] and random.random() <= 0.3:
+                moves_this_turn.append(self.moves_to_make.pop())
+
+        if make_all_moves:
+            for m in range(6):
+                if move_cost(m+1) > min(0, myGold - 60):
+                    break
+                moves_this_turn.append(self.moves_to_make.pop())
+
+        surrounding_tiles = []
+        if status.health <= 85:
+            for uc in self.update_coors((status.x, status.y), self.directions):
+                surrounding_tiles.append(uc)
+
+            surrounding_tiles = [st for st in surrounding_tiles if self.myMemory[st] == '.']
+
+        if surrounding_tiles != []:
+            moves_this_turn = [random.choice(surrounding_tiles)]
 
         return moves_this_turn
 
+
     def move(self, status):
-        
-        myPos = (status.x,status.y)
-        # Load objects from pickle file
-        self.moves_prev_turn = load_moves_prev_turn()
-        self.moves_to_make = load_moves_to_make()
          
         if status.health >= 30:
             moves_this_turn = self.decide_on_moves(status)
         if status.health < 30:
             moves_this_turn = []
-            
-        # Remember current moves and previous position for next turn
-        self.moves_prev_turn = (myPos, moves_this_turn)
-        # Save objects to pickle file
-        save_moves_prev_turn(self.moves_prev_turn)
-        save_moves_to_make(self.moves_to_make)
         
         return moves_this_turn
-        
+    
 
-    def set_mines(self, status):
-        
-        # Since knowledge of the tiles the robot will move on is required
-        # before the mines are set, the moves to make are computed before and inside
-        # the set_mines function, because it is called before the move function
-        
-        # Load objects from pickle file
-        self.myMemory = load_map_memory()
-        self.moves_to_make = load_moves_to_make()
-        self.moves_prev_turn = load_moves_prev_turn()
-
-        # If goldPot has been relocated then empty self.moves_to_make and newly compute path
-        if ((self.round-1) / status.params.goldPotTimeOut) == 0:
-            self.moves_to_make = []
-
-        if len(self.seen_tiles) != self.map_width * self.map_height:
-            self.myMemory.update(status, self.seen_tiles)
+    def compute_path(self, status, other_player_pos):
 
         myPos = (status.x,status.y)
         min_approxDist2gold = min([self.approx_distance(myPos,gp) for gp in status.goldPots.keys()])
@@ -159,50 +109,65 @@ class ROBNIC(Player):
         tile_approxDist = [(tile, self.approx_distance(tile, self.gold_pos)) 
                            for tile in self.myMemory.free_tiles(myPos)]
         tile_approxDist.sort(key=lambda x:x[1])
-    
+
         for tile in tile_approxDist:
             # Initialize pathfinder
             pathfinder = Astar(self.myMemory, myPos, tile[0])
-            self.moves_to_make = pathfinder.optimize()
+            self.moves_to_make = pathfinder.optimize(other_player_pos)
             
             if self.moves_to_make != []:
                 break
+
+        if tile_approxDist[0][0] == self.gold_pos:
+            return True
+        return False # return Boolean value, whether gold is in sight
+
+    def path_to_set_mine(self, status, other_player_pos):
         
-        set_mine = False
-        myPos = (status.x, status.y)
-        for op in status.others:
-            if op != None:
-                set_mine = True
-                
-        tiles_for_mines = []
-        if set_mine and random.random() <= 0.9 and status.gold >= 100:
-            for _d in self.directions:
-                tiles_for_mines.append(self.coor_dir_update(myPos, _d))
-        if tiles_for_mines == []:
-            set_mine = False
-                
-        # Extract positions robot will walk on to remove them
-        # as possible coordinates for mine setting
-        pos_to_remove = set()
-        if set_mine:
-            for p in self.update_coors(myPos, self.moves_to_make[-2:][::-1]):
-                pos_to_remove = pos_to_remove.union([p])
+        paths = [] 
+        for sop in status.others:
+            if sop is not None:
+                pathf = Astar(self.myMemory, (sop.x, sop.y), self.gold_pos)
+                paths.append((pathf.start.coor, pathf.optimize(other_player_pos)))
+
+        len_paths = [len(p[1]) for p in paths]
+        pos, path = paths[len_paths.index(min(len_paths))]
+
+        tiles = []
+        for uc in self.update_coors(pos, path[::-1]):
+            tiles.append(uc)
+
+        return tiles
+
+    def set_mines(self, status):
         
-            for tile in tiles_for_mines:
-                if self.myMemory[tile] == '#':
-                    pos_to_remove = pos_to_remove.union([tile])
-        
-        # Remove tiles the robot will walk over from tiles_for_mines list
-        tiles_for_mines = list(set(tiles_for_mines) - pos_to_remove)
-        
+        # Load objects from pickle file
+        self.myMemory = load_map_memory()
+
+        if len(self.seen_tiles) != self.map_width * self.map_height:
+            self.myMemory.update(status, self.seen_tiles)
+
+        other_player_pos = []
+        for sop in status.others:
+            if sop is not None:
+                other_player_pos.append((sop.x, sop.y))
+
+        # Get the optimal path -> save to self.moves_to_make
+        set_mine = self.compute_path(status, other_player_pos)
+
         mine_pos = []
-        if tiles_for_mines != []:
-            mine_pos.append(random.choice(tiles_for_mines))
+
+        if other_player_pos != [] and set_mine:
+            tiles_for_mine = self.path_to_set_mine(status, other_player_pos)
+
+            myPos = (status.x, status.y)
+            all_distances = [self.approx_distance(myPos, t) for t in tiles_for_mine]
         
+            if int(status.gold/min(all_distances)) >= 30:
+                mine_pos = tiles_for_mine[all_distances.index(min(all_distances))]
+
         # Save objects to pickle file
         self.myMemory.local_save()
-        save_moves_to_make(self.moves_to_make)
-        save_moves_prev_turn(self.moves_prev_turn)
 
         return mine_pos
 

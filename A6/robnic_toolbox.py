@@ -1,38 +1,17 @@
 import pickle
+import tempfile
 from random import random
 from copy import deepcopy
 from game_utils import TileStatus
 from game_utils import Direction as D
 
 
-
-def save_moves_to_make(moves):
-    with open("robnic_moves_to_make.pickle", "wb") as moves_file:
-        pickle.dump(moves, moves_file)
-
-
-def load_moves_to_make():
-    with open("robnic_moves_to_make.pickle", "rb") as moves_file:
-        return pickle.load(moves_file)
-
-
-def save_moves_prev_turn(prev_moves):
-    with open("robnic_prev_moves.pickle", "wb") as prev_moves_file:
-        pickle.dump(prev_moves, prev_moves_file)
-
-
-def load_moves_prev_turn():
-    with open("robnic_prev_moves.pickle", "rb") as prev_moves_file:
-        return pickle.load(prev_moves_file)
-
-
 def load_map_memory():
-    with open("robnics_memory.pickle", "rb") as memory_file:
-        return pickle.load(memory_file)
+    with open(tempfile.gettempdir()+"robnics_memory.pickle", "rb") as f:
+        return pickle.load(f)
 
 
-# Compute total cost for given number of moves
-def move_costs(n):
+def move_cost(n):
     return (n*n + n)/2
 
 
@@ -63,8 +42,8 @@ class MapMemory(object):
         
 
     def local_save(self):
-        with open("robnics_memory.pickle", "wb") as memory_file:
-            pickle.dump(self, memory_file)
+        with open(tempfile.gettempdir()+"robnics_memory.pickle", "wb") as f:
+            pickle.dump(self, f)
     
 
     # Used for checking functionality
@@ -230,7 +209,10 @@ class Astar(object):
         _node.f = _node.g + _node.h
         
 
-    def is_walkable(self, coor):
+    def is_walkable(self, coor, constraints):
+        if coor in constraints:
+            return False
+
         object_ = self._map[coor[0], coor[1]]
         if object_ == '.':
             return True
@@ -280,7 +262,7 @@ class Astar(object):
         return self.optimal_path
             
 
-    def optimize(self):
+    def optimize(self, constraints):
         open_queue = PQueue()
         closed_dict = dict()
         
@@ -304,7 +286,7 @@ class Astar(object):
             for d in self.possible_directions(pos):
                 neighbor_coor = tuple([x+y for x,y in zip(pos, d.as_xy())])
                 
-                if not self.is_walkable(neighbor_coor) or neighbor_coor in closed_dict:
+                if not self.is_walkable(neighbor_coor, constraints) or neighbor_coor in closed_dict:
                     continue
                 
                 neighbor_node = Node(current_node, neighbor_coor)
