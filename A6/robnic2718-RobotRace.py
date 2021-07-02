@@ -162,9 +162,14 @@ class ROBNIC(Player):
 
             myPos = (status.x, status.y)
             all_distances = [self.approx_distance(myPos, t) for t in tiles_for_mine]
-        
-            if int(status.gold/min(all_distances)) >= 30:
-                mine_pos = tiles_for_mine[all_distances.index(min(all_distances))]
+
+            if tiles_for_mine != []:
+                if min(all_distances) == 0:
+                    if status.gold >= 30:
+                        mine_pos = tiles_for_mine[all_distances.index(min(all_distances))]
+                else:
+                    if int(status.gold/min(all_distances)) >= 30:
+                        mine_pos = tiles_for_mine[all_distances.index(min(all_distances))]
 
         # Save objects to pickle file
         self.myMemory.local_save()
