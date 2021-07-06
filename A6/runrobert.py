@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Jun  6 15:42:29 2021
+
+@author: lino
+"""
 import random
 import argparse
 
@@ -18,9 +24,8 @@ parser.add_argument('--map', help="specify map file", type=str,default=None)
 
 args = parser.parse_args()
 
-robot_module_names = {"Test":"test-RobotRace","Beatme": "beatme-RobotRace","Robert":"robo"}
-#"Beatme": "beatme-RobotRace"
-#
+robot_module_names = {"Robert":"robo"}
+# robot_module_names = {"Test":"test-RobotRace"}
 robotmodules = { m:__import__(m) for m in robot_module_names.values() }
 
 if args.map is not None:
